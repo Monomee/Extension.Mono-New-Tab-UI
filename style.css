@@ -287,7 +287,11 @@ body.editing .drop-target { animation: none; }
   display: flex; align-items: center; gap: 14px;
   max-width: calc(100% - 48px); padding: 12px 14px; border-radius: 30px;
 }
-#dockList { display: flex; gap: 14px; min-width: 64px; min-height: 64px; overflow-x: auto; scrollbar-width: none; }
+#dockList {
+  display: flex; gap: 14px; min-width: 64px; min-height: 64px; overflow-x: auto; scrollbar-width: none;
+  /* overflow-x also clips vertically: pad so hover scale + edit-mode × fit, negative margin keeps dock size */
+  padding: 10px 10px; margin: -10px -10px;
+}
 #dock .label { display: none; }
 #dock .link a { gap: 0; }
 .sep { width: 1px; align-self: stretch; margin: 6px 0; background: var(--glass-line); }

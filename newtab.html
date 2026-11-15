@@ -9,6 +9,7 @@
 <body>
 <div id="wall"></div>
 <div id="dim"></div>
+<a id="wallCaption" target="_blank" rel="noopener" hidden></a>
 
 <header id="top">
   <form id="search" class="glass" role="search">
@@ -65,6 +66,8 @@
     <button class="btn" data-add="todo">Việc cần làm</button>
     <button class="btn" data-add="note-4">Ghi chú (lớn)</button>
     <button class="btn" data-add="note-2">Ghi chú (nhỏ)</button>
+    <button class="btn" data-add="weather-2">Thời tiết (nhỏ)</button>
+    <button class="btn" data-add="weather-4">Thời tiết (lớn)</button>
   </div>
   <div class="row"><button class="btn" data-close>Đóng</button></div>
 </dialog>
@@ -83,6 +86,7 @@
     <h3>Ảnh nền</h3>
     <div class="row wrap">
       <label class="btn">Chọn ảnh từ máy<input type="file" id="wallFile" accept="image/*" hidden></label>
+      <button class="btn" id="wallDaily">Ảnh Bing mỗi ngày</button>
       <button class="btn" id="wallReset">Mặc định</button>
     </div>
     <form class="row" id="wallUrlForm">

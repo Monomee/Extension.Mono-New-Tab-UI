@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Mono New Tab",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Trang New Tab kiểu màn hình chính iPad: lưới widget, dock truy cập nhanh, ảnh nền tùy chọn.",
   "chrome_url_overrides": { "newtab": "newtab.html" },
-  "permissions": ["storage", "unlimitedStorage", "favicon"]
+  "permissions": ["storage", "unlimitedStorage", "favicon"],
+  "host_permissions": ["https://www.bing.com/*"]
 }

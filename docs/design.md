@@ -13,12 +13,17 @@ Dùng cá nhân, ưu tiên **đẹp, mở tab là hiện ngay, tự chỉnh dễ
 - Chế độ chỉnh sửa kiểu iOS: nhấn giữ hoặc nút ✎ → icon rung, nút ×, kéo thả, nút "+" thêm link/widget, nút "Xong".
 - Sao lưu / khôi phục toàn bộ cấu hình ra file JSON.
 
-## Không làm ở v1 (để đợt sau)
-Thư mục icon, widget thời tiết, Pomodoro, ảnh nền tự đổi hằng ngày, đồng bộ giữa các máy, đổi kích thước widget bằng chuột.
+## Đã thêm sau v1
+- **v1.1 Thư mục**: kéo lối tắt thả vào giữa lối tắt/thư mục khác để gộp; bảng thư mục đổi tên, sắp xếp, kéo ra ngoài; 1 lối tắt → tự gỡ. Chỉ ở trang, không lồng.
+- **v1.2 Thời tiết**: widget 2×2 / 4×2 (dự báo 5 ngày), Open-Meteo (không cần key), thành phố chọn qua geocoding, lưu `settings.city`; cache 30 phút.
+- **v1.2 Ảnh Bing mỗi ngày**: IndexedDB `{daily:'bing'}`; cache theo ngày (`bingCache`), lỗi mạng → ảnh cũ → gradient. Cần `host_permissions: https://www.bing.com/*` (Bing không có CORS).
+
+## Chưa làm
+Pomodoro, đồng bộ giữa các máy, đổi kích thước widget bằng chuột.
 
 ## Phản mục tiêu (làm ra mà dính thì coi như hỏng)
 - Mở tab mới bị chậm/nháy trắng.
-- Gọi dịch vụ ngoài/theo dõi người dùng (ngoài favicon nội bộ Chrome & ảnh URL do người dùng tự dán).
+- Gọi dịch vụ ngoài/theo dõi người dùng. Ngoại lệ có chủ đích: favicon nội bộ Chrome, ảnh URL do người dùng dán, Open-Meteo (chỉ khi có widget thời tiết), Bing (chỉ khi bật ảnh mỗi ngày).
 - Mất dữ liệu (ghi chú, todo, link) khi thao tác sai hoặc import file hỏng.
 
 ## Ràng buộc

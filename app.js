@@ -36,20 +36,44 @@ const loads = src => new Promise(r => {
   i.src = src;
 });
 
+// Bing image of the day, cached per local day. Offline → yesterday's image; nothing cached → gradient.
+async function bingToday() {
+  const day = new Date().toDateString();
+  const { bingCache: c } = await chrome.storage.local.get('bingCache');
+  if (c?.day === day) return c;
+  try {
+    const d = await fetch('https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=vi-VN').then(r => r.json());
+    const img = d.images[0];
+    const url = normalizeUrl('https://www.bing.com' + img.urlbase + '_1920x1080.jpg');
+    if (!url?.startsWith('https://www.bing.com/')) throw new Error('bad bing url');
+    const out = { day, url, caption: String(img.copyright || '').slice(0, 200), link: normalizeUrl(img.copyrightlink) };
+    await chrome.storage.local.set({ bingCache: out });
+    return out;
+  } catch {
+    return c || null;
+  }
+}
+
 let wallSrc;
 async function applyWall() {
   const v = await getWall().catch(() => null);
   if (wallSrc?.startsWith('blob:')) URL.revokeObjectURL(wallSrc);
-  wallSrc = v instanceof Blob ? URL.createObjectURL(v) : v?.url;
+  const daily = v?.daily ? await bingToday() : null;
+  wallSrc = v instanceof Blob ? URL.createObjectURL(v) : daily ? daily.url : v?.url;
   const ok = wallSrc ? await loads(wallSrc) : false;
   $('#wall').style.backgroundImage = ok ? `url("${wallSrc}")` : ''; // fail → CSS gradient
+  const cap = $('#wallCaption');
+  cap.hidden = !(ok && daily?.caption);
+  cap.textContent = daily?.caption || '';
+  if (daily?.link) cap.href = daily.link;
+  else cap.removeAttribute('href');
 }
 applyWall(); // start before state loads to avoid a flash
 
 /* ---------- state ---------- */
 const state = await loadState();
 const save = () => saveState(state);
-const ctx = { state, save };
+const ctx = { state, save, render: () => render() };
 let editing = false, sortables = [];
 
 const replaceState = next => {
@@ -491,10 +515,15 @@ $('#wallUrlForm').addEventListener('submit', async e => {
   msg('Đã đổi ảnh nền.');
 });
 $('#wallReset').onclick = async () => { await putWall(null); await applyWall(); msg('Đã về nền mặc định.'); };
+$('#wallDaily').onclick = async () => {
+  await putWall({ daily: 'bing' });
+  await applyWall();
+  msg($('#wall').style.backgroundImage ? 'Ảnh nền sẽ tự đổi mỗi ngày.' : 'Không tải được ảnh Bing, thử lại sau.', !$('#wall').style.backgroundImage);
+};
 
 $('#exportBtn').onclick = async () => {
   const wall = await getWall().catch(() => null);
-  const data = { ...state, wallpaperUrl: wall instanceof Blob ? undefined : wall?.url };
+  const data = { ...state, wallpaperUrl: wall instanceof Blob ? undefined : wall?.url, wallpaperDaily: !!wall?.daily || undefined };
   const a = h('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
   a.download = `mono-newtab-${new Date().toISOString().slice(0, 10)}.json`;
@@ -507,18 +536,19 @@ $('#importFile').onchange = async e => {
   e.target.value = '';
   if (!f) return;
   if (f.size > 5e6) return msg('File quá lớn (tối đa 5MB).', true);
-  let next, wallUrl;
+  let next, wall;
   try {
     const raw = JSON.parse(await f.text());
     next = validateState(raw);
-    wallUrl = normalizeUrl(raw.wallpaperUrl);
+    const wallUrl = normalizeUrl(raw.wallpaperUrl);
+    wall = raw.wallpaperDaily === true ? { daily: 'bing' } : wallUrl ? { url: wallUrl } : null;
   } catch (err) {
     return msg('Không nhập được: ' + (err instanceof SyntaxError ? 'file không phải JSON hợp lệ.' : err.message), true);
   }
   if (!confirm('Thay toàn bộ màn hình hiện tại bằng dữ liệu trong file?')) return;
   replaceState(next);
   await save();
-  if (wallUrl) { await putWall({ url: wallUrl }); await applyWall(); }
+  if (wall) { await putWall(wall); await applyWall(); }
   applySettings();
   syncSettingsUI();
   render();
@@ -529,6 +559,7 @@ $('#importFile').onchange = async e => {
 // Each tab holds its own copy; reload when this tab becomes visible so it never saves stale data.
 document.addEventListener('visibilitychange', async () => {
   if (document.hidden || editing) return;
+  applyWall(); // picks up a new daily image after midnight
   replaceState(await loadState());
   applySettings();
   syncSettingsUI();

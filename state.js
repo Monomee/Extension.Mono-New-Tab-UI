@@ -1,5 +1,5 @@
 // Pure state helpers + chrome.storage persistence.
-export const WIDGET_SIZES = { clock: [[2, 2]], date: [[2, 2]], todo: [[2, 2]], note: [[4, 2], [2, 2]] };
+export const WIDGET_SIZES = { clock: [[2, 2]], date: [[2, 2]], todo: [[2, 2]], note: [[4, 2], [2, 2]], weather: [[2, 2], [4, 2]] };
 export const ENGINES = {
   google: 'https://www.google.com/search',
   bing: 'https://www.bing.com/search',
@@ -35,7 +35,7 @@ export function defaultState() {
     ],
     notes: {},
     todos: {},
-    settings: { search: true, engine: 'google', dim: 0.2, blur: 0 },
+    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null },
   };
 }
 
@@ -61,6 +61,12 @@ function cleanItem(i, allowWidget) {
   return null;
 }
 
+const cleanCity = c => {
+  if (!isObj(c)) return null;
+  const lat = num(c.lat, -90, 90, NaN), lon = num(c.lon, -180, 180, NaN);
+  return str(c.name, 80) && !isNaN(lat) && !isNaN(lon) ? { name: str(c.name, 80), lat, lon } : null;
+};
+
 // Untrusted input (imported JSON). Throws on wrong shape, drops bad items/unknown fields.
 export function validateState(obj) {
   if (!isObj(obj) || !Array.isArray(obj.pages) || !Array.isArray(obj.dock)) throw new Error('File không đúng định dạng Mono New Tab');
@@ -82,6 +88,7 @@ export function validateState(obj) {
     engine: ENGINES[s.engine] ? s.engine : 'google',
     dim: num(s.dim, 0, 0.8, 0.2),
     blur: num(s.blur, 0, 30, 0),
+    city: cleanCity(s.city),
   };
   return { version: 1, pages, dock, notes, todos, settings };
 }

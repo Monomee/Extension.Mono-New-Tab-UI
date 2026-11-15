@@ -1,7 +1,8 @@
 // Widget renderers. Each returns the inner content for a .widget element.
 import { uid } from './state.js';
+import { renderWeather } from './weather.js';
 
-const h = (tag, cls, text) => {
+export const h = (tag, cls, text) => {
   const el = document.createElement(tag);
   if (cls) el.className = cls;
   if (text != null) el.textContent = text;
@@ -106,8 +107,7 @@ function todo(item, { state, save }) {
   return [title, list, form];
 }
 
-const RENDER = { clock, date, note, todo };
-export const WIDGET_NAMES = { clock: 'Đồng hồ', date: 'Ngày', note: 'Ghi chú', todo: 'Việc cần làm' };
+const RENDER = { clock, date, note, todo, weather: renderWeather };
 
 export function renderWidget(item, ctx) {
   return RENDER[item.kind](item, ctx);

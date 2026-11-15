@@ -227,6 +227,46 @@ body.editing .drop-target { animation: none; }
 }
 .w-note::placeholder { color: var(--ink-soft); }
 
+/* weather */
+[data-kind="weather"] {
+  background: linear-gradient(160deg, rgba(74, 144, 226, .55), rgba(40, 80, 160, .5));
+  color: #fff;
+}
+[data-kind="weather"] .w-title { color: #fff; }
+.wx { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.wx.wide { flex-direction: row; gap: 18px; }
+.wx-now { flex: none; display: flex; flex-direction: column; position: relative; min-width: 150px; }
+.wx-link { border: 0; background: none; padding: 0; cursor: pointer; color: inherit; font: inherit; text-align: left; }
+.wx-link:hover { text-decoration: underline; }
+.wx-city { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.wx-temp { font-size: 56px; font-weight: 300; line-height: 1; margin: 6px 0 auto; letter-spacing: -.03em; }
+.wx-icon { position: absolute; top: 0; right: 0; font-size: 28px; }
+.wx-desc { font-size: 13px; font-weight: 600; }
+.wx-range { font-size: 13px; opacity: .85; }
+.wx-days { flex: 1; display: flex; justify-content: space-between; align-items: stretch; padding-left: 14px; border-left: 1px solid rgba(255, 255, 255, .25); }
+.wx-day { display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+.wx-di { font-size: 22px; }
+.wx-muted { opacity: .75; font-size: 13px; }
+.wx-setup input {
+  width: 100%; border: 0; outline: 0; border-radius: 10px; padding: 7px 10px;
+  background: rgba(255, 255, 255, .22); color: #fff; font-size: 13px;
+}
+.wx-setup input::placeholder { color: rgba(255, 255, 255, .75); }
+.wx-results { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; min-height: 0; }
+.wx-pick {
+  border: 0; border-radius: 8px; padding: 5px 8px; text-align: left; cursor: pointer; font-size: 12.5px;
+  background: rgba(255, 255, 255, .12); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wx-pick:hover { background: rgba(255, 255, 255, .25); }
+
+#wallCaption {
+  position: fixed; left: 20px; bottom: 16px; max-width: min(360px, 30vw);
+  font-size: 11.5px; color: rgba(255, 255, 255, .75); text-decoration: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#wallCaption:hover { color: #fff; }
+
 /* todo */
 [data-kind="todo"] .w-title { color: var(--accent); }
 .todo-list { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; scrollbar-width: thin; }

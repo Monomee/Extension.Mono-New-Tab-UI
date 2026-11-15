@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { normalizeUrl, defaultState, validateState } from '../state.js';
+import { describeWeather } from '../weather.js';
 
 assert.equal(normalizeUrl('youtube.com'), 'https://youtube.com/');
 assert.equal(normalizeUrl('  http://a.vn/x '), 'http://a.vn/x');
@@ -42,5 +43,22 @@ assert.deepEqual(folder.items.map(i => i.id), ['a']);
 assert.equal(folder.title, 'Học');
 assert.ok(!fc.pages[0].some(i => i.id === 'empty'));
 assert.ok(!fc.dock.some(i => i.id === 'fd'));
+
+// weather: widget sizes 2x2 / 4x2, city validated
+const w = structuredClone(d);
+w.pages[0].push({ id: 'wx', type: 'widget', kind: 'weather', w: 4, h: 2 });
+w.settings.city = { name: 'Hà Nội', lat: 21.02, lon: 105.84 };
+const wc = validateState(w);
+assert.deepEqual(wc.pages[0].find(i => i.id === 'wx'), { id: 'wx', type: 'widget', kind: 'weather', w: 4, h: 2 });
+assert.deepEqual(wc.settings.city, { name: 'Hà Nội', lat: 21.02, lon: 105.84 });
+assert.equal(validateState({ ...d, settings: { ...d.settings, city: { name: 'x', lat: 999, lon: 0 } } }).settings.city, null);
+assert.equal(validateState({ ...d, settings: { ...d.settings, city: 'Hanoi' } }).settings.city, null);
+assert.equal(d.settings.city, null);
+
+// weather codes
+assert.deepEqual(describeWeather(0, true), { icon: '☀️', text: 'Trời quang' });
+assert.equal(describeWeather(0, false).icon, '🌙');
+assert.equal(describeWeather(63, true).text, 'Mưa');
+assert.equal(describeWeather(12345, true).text, 'Không rõ');
 
 console.log('ok');

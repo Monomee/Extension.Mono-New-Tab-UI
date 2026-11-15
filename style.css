@@ -171,10 +171,17 @@ body.editing .drop-target { animation: none; }
 .folder-dlg[open] { display: grid; }
 .folder-dlg::backdrop { background: rgba(0, 0, 0, .25); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
 .folder-panel {
+  position: relative; isolation: isolate;
   width: min(560px, calc(100% - 32px)); padding: 24px 28px 32px; border-radius: 36px;
-  background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .3);
-  -webkit-backdrop-filter: blur(30px) saturate(160%); backdrop-filter: blur(30px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, .3);
   box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+}
+/* Blur lives on a pseudo-element: backdrop-filter on the panel itself would become the containing
+   block for SortableJS's position:fixed drag ghost and offset it by the panel's position. */
+.folder-panel::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+  background: rgba(255, 255, 255, .2);
+  -webkit-backdrop-filter: blur(30px) saturate(160%); backdrop-filter: blur(30px) saturate(160%);
 }
 .folder-panel .folder-title {
   display: block; width: 100%; margin: 0 0 22px; padding: 4px 8px; border: 0; border-radius: 10px;

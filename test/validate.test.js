@@ -26,4 +26,21 @@ assert.ok(!clean.pages[0].some(i => i.id === 'bad' || i.id === 'w'));
 assert.ok(clean.dock.every(i => i.type === 'link'));
 assert.equal(clean.notes.orphan, undefined);
 
+// folders: pages only, links only inside, no nesting, empty dropped
+const f = structuredClone(d);
+f.pages[0].push({ id: 'f1', type: 'folder', title: 'Học', items: [
+  { id: 'a', type: 'link', url: 'https://a.vn/', title: 'A' },
+  { id: 'bad', type: 'link', url: 'javascript:alert(1)', title: 'x' },
+  { id: 'nest', type: 'folder', title: 'n', items: [{ id: 'b', type: 'link', url: 'https://b.vn/', title: 'B' }] },
+  { id: 'w', type: 'widget', kind: 'clock', w: 2, h: 2 },
+] });
+f.pages[0].push({ id: 'empty', type: 'folder', title: 'E', items: [] });
+f.dock.push({ id: 'fd', type: 'folder', title: 'D', items: [{ id: 'c', type: 'link', url: 'https://c.vn/', title: 'C' }] });
+const fc = validateState(f);
+const folder = fc.pages[0].find(i => i.id === 'f1');
+assert.deepEqual(folder.items.map(i => i.id), ['a']);
+assert.equal(folder.title, 'Học');
+assert.ok(!fc.pages[0].some(i => i.id === 'empty'));
+assert.ok(!fc.dock.some(i => i.id === 'fd'));
+
 console.log('ok');

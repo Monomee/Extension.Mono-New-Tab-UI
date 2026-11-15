@@ -50,6 +50,10 @@ function cleanItem(i, allowWidget) {
     const url = normalizeUrl(i.url);
     return url ? { id, type: 'link', url, title: str(i.title, 60) || new URL(url).hostname } : null;
   }
+  if (allowWidget && i.type === 'folder' && Array.isArray(i.items)) {
+    const items = i.items.slice(0, 100).map(x => cleanItem(x, false)).filter(Boolean); // links only, no nesting
+    return items.length ? { id, type: 'folder', title: str(i.title, 40) || 'Thư mục', items } : null;
+  }
   if (allowWidget && i.type === 'widget' && WIDGET_SIZES[i.kind]) {
     const ok = WIDGET_SIZES[i.kind].find(([w, h]) => w === i.w && h === i.h) || WIDGET_SIZES[i.kind][0];
     return { id, type: 'widget', kind: i.kind, w: ok[0], h: ok[1] };

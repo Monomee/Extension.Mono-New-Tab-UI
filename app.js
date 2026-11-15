@@ -56,7 +56,14 @@ const replaceState = next => {
   for (const k of Object.keys(state)) delete state[k];
   Object.assign(state, next);
 };
-const allItems = () => [...state.pages.flat(), ...state.dock];
+const allItems = () => {
+  const top = [...state.pages.flat(), ...state.dock];
+  return [...top, ...top.flatMap(i => i.items || [])];
+};
+// Folder with 0 items disappears, with 1 item dissolves back into a link (iOS behaviour).
+const normalizeFolders = () => {
+  state.pages = state.pages.map(p => p.flatMap(i => (i.type !== 'folder' || i.items.length > 1 ? [i] : i.items)));
+};
 const findItem = id => allItems().find(i => i.id === id);
 
 function applySettings() {
@@ -70,13 +77,25 @@ function applySettings() {
 /* ---------- items ---------- */
 const faviconUrl = u => `${chrome.runtime.getURL('/_favicon/')}?pageUrl=${encodeURIComponent(u)}&size=64`;
 
-function letterIcon(icon, item) {
-  const host = new URL(item.url).hostname.replace(/^www\./, '');
+const hostOf = url => new URL(url).hostname.replace(/^www\./, '');
+const hueOf = s => {
   let hash = 0;
-  for (const c of host) hash = (hash * 31 + c.charCodeAt(0)) | 0;
-  icon.className = 'icon letter';
-  icon.style.background = `hsl(${Math.abs(hash) % 360} 62% 52%)`;
+  for (const c of s) hash = (hash * 31 + c.charCodeAt(0)) | 0;
+  return Math.abs(hash) % 360;
+};
+function letterIcon(icon, item, cls = 'icon letter') {
+  const host = hostOf(item.url);
+  icon.className = cls;
+  icon.style.background = `hsl(${hueOf(host)} 62% 52%)`;
   icon.textContent = (item.title || host)[0].toUpperCase();
+}
+function miniIcon(link) {
+  const box = h('span', 'mini'), img = new Image();
+  img.alt = '';
+  img.onerror = () => letterIcon(box, link, 'mini letter');
+  img.src = faviconUrl(link.url);
+  box.append(img);
+  return box;
 }
 
 function itemEl(item) {
@@ -95,6 +114,15 @@ function itemEl(item) {
     icon.append(img);
     a.append(icon, h('span', 'label', item.title));
     el.append(a);
+  } else if (item.type === 'folder') {
+    const open = h('div', 'open'); // not a <button>: long-press must work on it
+    open.role = 'button';
+    open.tabIndex = 0;
+    open.title = item.title;
+    const icon = h('span', 'icon folder-icon');
+    icon.append(...item.items.slice(0, 9).map(miniIcon));
+    open.append(icon, h('span', 'label', item.title));
+    el.append(open);
   } else {
     el.classList.add('glass');
     Object.assign(el.dataset, { kind: item.kind, w: item.w, h: item.h });
@@ -116,9 +144,54 @@ const sortOpts = where => ({
   emptyInsertThreshold: 40,
   forceFallback: true, // mouse-event drag: consistent ghost, works for all inputs
   fallbackTolerance: 4,
-  onStart: () => (dragging = true),
-  onEnd: () => { dragging = false; setTimeout(syncFromDom); },
+  onStart: evt => { dragging = true; dragEl = evt.item; },
+  // Hovering a dragged link over the centre of another page link/folder targets it for merging
+  // instead of swapping places.
+  onMove: evt => {
+    const rel = evt.related;
+    const mergeable = evt.dragged.dataset.type === 'link' && rel.closest('#pages') && rel.matches('.link, .folder');
+    if (mergeable && overCentre(rel)) { setDropTarget(rel); return false; }
+    setDropTarget(null);
+    return true;
+  },
+  onEnd: evt => {
+    dragging = false;
+    dragEl = null;
+    const target = dropTarget && overCentre(dropTarget) ? dropTarget.dataset.id : null;
+    setDropTarget(null);
+    setTimeout(() => {
+      readDom();
+      if (target) mergeInto(target, evt.item.dataset.id);
+      normalizeFolders();
+      save();
+      render();
+    });
+  },
 });
+
+let dropTarget = null, dragEl = null;
+const setDropTarget = el => {
+  if (dropTarget === el) return;
+  dropTarget?.classList.remove('drop-target');
+  dropTarget = el;
+  el?.classList.add('drop-target');
+};
+const overCentre = el => {
+  const r = el.querySelector('.icon').getBoundingClientRect(), [x, y] = lastXY;
+  return Math.abs(x - (r.left + r.width / 2)) < r.width * 0.35 && Math.abs(y - (r.top + r.height / 2)) < r.height * 0.35;
+};
+
+function mergeInto(targetId, dragId) {
+  const drag = findItem(dragId);
+  if (!drag || drag.type !== 'link' || targetId === dragId) return;
+  state.pages = state.pages.map(p => p.filter(i => i.id !== dragId));
+  state.dock = state.dock.filter(i => i.id !== dragId);
+  const target = findItem(targetId);
+  const page = state.pages.find(p => p.includes(target));
+  if (!page) return state.pages[curPage()].push(drag); // target vanished: don't lose the link
+  if (target.type === 'folder') target.items.push(drag);
+  else page[page.indexOf(target)] = { id: uid(), type: 'folder', title: 'Thư mục', items: [target, drag] };
+}
 
 const readBox = (box, byId) => [...box.querySelectorAll(':scope > .item')].map(el => byId.get(el.dataset.id)).filter(Boolean);
 function readDom() {
@@ -199,9 +272,15 @@ $pages.addEventListener('wheel', e => {
 }, { passive: false });
 
 // Dragging an item to the screen edge flips the page.
-let flipAt = 0, dragging = false;
+let flipAt = 0, dragging = false, lastXY = [0, 0];
 document.addEventListener('pointermove', e => {
   if (!dragging) return;
+  lastXY = [e.clientX, e.clientY];
+  if (dragEl?.dataset.type === 'link') {
+    const over = document.elementFromPoint(...lastXY)?.closest('#pages .link, #pages .folder');
+    setDropTarget(over && over !== dragEl && overCentre(over) ? over : null);
+  }
+  if (!editing || $('#folderDlg').open) return; // no page flips while a folder is open
   const dir = e.clientX < 60 ? -1 : e.clientX > innerWidth - 60 ? 1 : 0;
   if (!dir || Date.now() - flipAt < 800) return;
   flipAt = Date.now();
@@ -218,19 +297,21 @@ function setEditing(on) {
     save();
   }
   render();
+  if ($('#folderDlg').open) renderFolder();
   if (curPage() >= state.pages.length) goPage(state.pages.length - 1);
 }
 $('#editBtn').onclick = () => setEditing(true);
 $('#doneBtn').onclick = () => setEditing(false);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && editing && !$('dialog[open]')) setEditing(false);
+  if (e.key === 'Enter' && e.target.matches('.folder .open')) openFolder(e.target.parentElement.dataset.id);
 });
 
 // Long-press (500ms) on the home screen enters edit mode.
 let pressTimer, pressXY, swallowClick = false;
 document.addEventListener('pointerdown', e => {
   swallowClick = false;
-  if (editing || e.button !== 0 || !e.target.closest('#pages, #dock')) return;
+  if (editing || e.button !== 0 || !e.target.closest('#pages, #dock, #folderGrid')) return;
   if (e.target.closest('input, textarea, button, .todo-list')) return;
   pressXY = [e.clientX, e.clientY];
   pressTimer = setTimeout(() => { swallowClick = true; setEditing(true); }, 500);
@@ -244,6 +325,8 @@ document.addEventListener('click', e => {
   if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); return; }
   const del = e.target.closest('.del');
   if (del) { e.preventDefault(); removeItem(del.parentElement.dataset.id); return; }
+  const folder = e.target.closest('.item.folder');
+  if (folder) { openFolder(folder.dataset.id); return; }
   if (!editing) return;
   const link = e.target.closest('.item.link');
   if (link) { e.preventDefault(); openLinkDlg(findItem(link.dataset.id)); return; }
@@ -251,15 +334,76 @@ document.addEventListener('click', e => {
 }, true);
 
 function removeItem(id) {
-  const hasContent = (state.notes[id] || '').trim() || state.todos[id]?.length;
-  if (hasContent && !confirm('Widget này vẫn còn nội dung. Xóa luôn?')) return;
-  state.pages = state.pages.map(p => p.filter(i => i.id !== id));
-  state.dock = state.dock.filter(i => i.id !== id);
+  const it = findItem(id);
+  if (!it) return;
+  if (it.type === 'folder') {
+    if (!confirm(`Xóa thư mục "${it.title}" cùng ${it.items.length} lối tắt bên trong?`)) return;
+  } else if (((state.notes[id] || '').trim() || state.todos[id]?.length) && !confirm('Widget này vẫn còn nội dung. Xóa luôn?')) return;
+  const keep = i => i.id !== id;
+  state.pages = state.pages.map(p => p.filter(keep));
+  state.dock = state.dock.filter(keep);
+  for (const f of state.pages.flat()) if (f.type === 'folder') f.items = f.items.filter(keep);
   delete state.notes[id];
   delete state.todos[id];
+  normalizeFolders();
   save();
-  document.querySelector(`.item[data-id="${CSS.escape(id)}"]`)?.remove();
+  render();
+  if ($('#folderDlg').open) renderFolder();
 }
+
+/* ---------- folders ---------- */
+let openFolderId = null, folderSortable = null;
+const $folderDlg = $('#folderDlg'), $folderGrid = $('#folderGrid');
+
+function openFolder(id) {
+  openFolderId = id;
+  renderFolder();
+  if (!$folderDlg.open) $folderDlg.showModal();
+}
+function renderFolder() {
+  const f = findItem(openFolderId);
+  if (f?.type !== 'folder') return $folderDlg.close(); // dissolved or deleted
+  $('#folderTitle').value = f.title;
+  folderSortable?.destroy();
+  $folderGrid.replaceChildren(...f.items.map(itemEl));
+  folderSortable = Sortable.create($folderGrid, {
+    animation: 200,
+    disabled: !editing,
+    filter: '.del',
+    preventOnFilter: false,
+    forceFallback: true,
+    fallbackTolerance: 4,
+    onStart: () => (dragging = true),
+    onEnd: evt => { dragging = false; setTimeout(() => folderDrop(evt.item.dataset.id)); },
+  });
+}
+// Reorder inside the folder, or — dropped outside the panel — move the link out to the current page.
+function folderDrop(id) {
+  const f = findItem(openFolderId);
+  f.items = readBox($folderGrid, new Map(f.items.map(i => [i.id, i])));
+  const r = $('.folder-panel').getBoundingClientRect(), [x, y] = lastXY;
+  if (x < r.left || x > r.right || y < r.top || y > r.bottom) {
+    const it = f.items.find(i => i.id === id);
+    f.items = f.items.filter(i => i !== it);
+    state.pages[curPage()].push(it);
+  }
+  normalizeFolders();
+  save();
+  render();
+  renderFolder();
+}
+$('#folderTitle').onchange = e => {
+  const f = findItem(openFolderId);
+  if (!f) return;
+  f.title = e.target.value.trim().slice(0, 40) || 'Thư mục';
+  save();
+  render();
+};
+$folderDlg.addEventListener('click', e => { if (e.target === $folderDlg) $folderDlg.close(); }); // backdrop
+$folderDlg.addEventListener('close', () => {
+  folderSortable?.destroy();
+  folderSortable = openFolderId = null;
+});
 
 /* ---------- dialogs ---------- */
 for (const b of document.querySelectorAll('[data-close]')) b.onclick = () => b.closest('dialog').close();
@@ -285,6 +429,7 @@ $('#linkForm').addEventListener('submit', e => {
   else (f.place.value === 'dock' ? state.dock : state.pages[curPage()]).push({ id: uid(), type: 'link', url, title });
   save();
   render();
+  if ($folderDlg.open) renderFolder();
   $('#linkDlg').close();
 });
 $('#dockAdd').onclick = () => openLinkDlg(null, 'dock');
@@ -388,6 +533,7 @@ document.addEventListener('visibilitychange', async () => {
   applySettings();
   syncSettingsUI();
   render();
+  if ($folderDlg.open) renderFolder();
 });
 
 /* ---------- boot ---------- */

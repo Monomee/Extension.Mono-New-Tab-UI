@@ -1,5 +1,5 @@
 /* global Sortable */
-import { loadState, saveState, validateState, normalizeUrl, uid, ENGINES, WIDGET_SIZES } from './state.js';
+import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES } from './state.js';
 import { renderWidget, tick } from './widgets.js';
 
 const $ = s => document.querySelector(s);
@@ -11,24 +11,44 @@ const h = (tag, cls, text) => {
 };
 const $pages = $('#pages'), $dockList = $('#dockList'), $dots = $('#dots');
 
-/* ---------- wallpaper (IndexedDB: Blob | {url}) ---------- */
+/* ---------- IndexedDB: wallpaper (Blob | {url} | {daily}), icons (link id → Blob) ---------- */
 const openDb = () => new Promise((res, rej) => {
-  const r = indexedDB.open('mono', 1);
-  r.onupgradeneeded = () => r.result.createObjectStore('wallpaper');
+  const r = indexedDB.open('mono', 2);
+  r.onupgradeneeded = () => {
+    for (const s of ['wallpaper', 'icons']) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s);
+  };
   r.onsuccess = () => res(r.result);
   r.onerror = () => rej(r.error);
 });
-const wallDb = async (mode, op) => {
+const idb = async (store, mode, op) => {
   const db = await openDb();
   return new Promise((res, rej) => {
-    const tx = db.transaction('wallpaper', mode);
-    const req = op(tx.objectStore('wallpaper'));
+    const tx = db.transaction(store, mode);
+    const req = op(tx.objectStore(store));
     tx.oncomplete = () => res(req.result);
     tx.onerror = () => rej(tx.error);
   });
 };
-const getWall = () => wallDb('readonly', s => s.get('current'));
-const putWall = v => wallDb('readwrite', s => (v ? s.put(v, 'current') : s.delete('current')));
+const getWall = () => idb('wallpaper', 'readonly', s => s.get('current'));
+const putWall = v => idb('wallpaper', 'readwrite', s => (v ? s.put(v, 'current') : s.delete('current')));
+
+// Uploaded link icons, kept as object URLs for synchronous rendering.
+const iconUrls = new Map();
+async function loadIcons() {
+  const [keys, blobs] = await Promise.all([
+    idb('icons', 'readonly', s => s.getAllKeys()),
+    idb('icons', 'readonly', s => s.getAll()),
+  ]).catch(() => [[], []]);
+  for (const u of iconUrls.values()) URL.revokeObjectURL(u);
+  iconUrls.clear();
+  keys.forEach((k, i) => iconUrls.set(k, URL.createObjectURL(blobs[i])));
+}
+async function setIcon(id, blob) {
+  if (iconUrls.has(id)) URL.revokeObjectURL(iconUrls.get(id));
+  iconUrls.delete(id);
+  await idb('icons', 'readwrite', s => (blob ? s.put(blob, id) : s.delete(id)));
+  if (blob) iconUrls.set(id, URL.createObjectURL(blob));
+}
 const loads = src => new Promise(r => {
   const i = new Image();
   i.onload = () => r(true);
@@ -113,14 +133,51 @@ function letterIcon(icon, item, cls = 'icon letter') {
   icon.style.background = `hsl(${hueOf(host)} 62% 52%)`;
   icon.textContent = (item.title || host)[0].toUpperCase();
 }
-function miniIcon(link) {
-  const box = h('span', 'mini'), img = new Image();
-  img.alt = '';
-  img.onerror = () => letterIcon(box, link, 'mini letter');
-  img.src = faviconUrl(link.url);
-  box.append(img);
-  return box;
+
+// Auto contrast: sample the loaded image; cross-origin images (tainted canvas) keep the white tile.
+const darkCache = new Map();
+function wantsDark(img) {
+  if (!darkCache.has(img.src)) {
+    let dark = false;
+    try {
+      const n = 32, c = document.createElement('canvas');
+      c.width = c.height = n;
+      const g = c.getContext('2d', { willReadFrequently: true });
+      g.drawImage(img, 0, 0, n, n);
+      dark = needsDarkTile(g.getImageData(0, 0, n, n).data);
+    } catch { /* tainted */ }
+    darkCache.set(img.src, dark);
+  }
+  return darkCache.get(img.src);
 }
+
+const iconSrcOf = link => (link.icon === 'upload' ? iconUrls.get(link.id) : link.icon);
+
+// Paint a link's tile: custom icon or favicon, background per link.bg ('light'|'dark'|'#hex'|auto).
+function paintIcon(box, link, src = iconSrcOf(link), base = 'icon') {
+  box.className = base;
+  box.style.background = '';
+  box.replaceChildren();
+  if (link.bg === 'dark') box.classList.add('dark');
+  else if (link.bg?.startsWith('#')) box.style.background = link.bg;
+  const img = new Image();
+  img.alt = '';
+  if (src) img.className = 'custom';
+  img.onload = () => { if (!link.bg && wantsDark(img)) box.classList.add('dark'); };
+  img.onerror = () => {
+    if (src) return paintIcon(box, link, null, base); // broken custom icon → favicon
+    letterIcon(box, link, base + ' letter');
+    if (link.bg === 'dark') box.style.background = '#1c1c1e'; // chosen bg beats the hashed colour
+    else if (link.bg?.startsWith('#')) box.style.background = link.bg;
+  };
+  img.src = src || faviconUrl(link.url);
+  box.append(img);
+}
+const miniIcon = link => {
+  const box = h('span', 'mini');
+  paintIcon(box, link, undefined, 'mini');
+  return box;
+};
 
 function itemEl(item) {
   const el = h('div', 'item ' + item.type);
@@ -131,11 +188,8 @@ function itemEl(item) {
     a.href = item.url;
     a.title = item.title;
     a.draggable = false;
-    const icon = h('span', 'icon'), img = new Image();
-    img.alt = '';
-    img.onerror = () => letterIcon(icon, item);
-    img.src = faviconUrl(item.url);
-    icon.append(img);
+    const icon = h('span');
+    paintIcon(icon, item);
     a.append(icon, h('span', 'label', item.title));
     el.append(a);
   } else if (item.type === 'folder') {
@@ -370,6 +424,7 @@ function removeItem(id) {
   delete state.notes[id];
   delete state.todos[id];
   normalizeFolders();
+  pruneIcons();
   save();
   render();
   if ($('#folderDlg').open) renderFolder();
@@ -432,30 +487,119 @@ $folderDlg.addEventListener('close', () => {
 /* ---------- dialogs ---------- */
 for (const b of document.querySelectorAll('[data-close]')) b.onclick = () => b.closest('dialog').close();
 
-let editingLink = null;
+// Link dialog. dlgIcon: 'keep' (existing icon) | 'none' (back to favicon) | {blob, url} (just uploaded).
+let editingLink = null, dlgIcon = 'keep';
+const $linkForm = $('#linkForm');
+const setDlgIcon = v => {
+  if (dlgIcon.url) URL.revokeObjectURL(dlgIcon.url);
+  dlgIcon = v;
+};
+const dlgBg = f => (f.bg.value === 'auto' ? undefined : f.bg.value === 'custom' ? f.bgColor.value : f.bg.value);
+function dlgIconSrc(f) {
+  if (dlgIcon.blob) return dlgIcon.url;
+  if (f.iconUrl.value.trim()) return normalizeUrl(f.iconUrl.value) || undefined;
+  if (dlgIcon === 'keep' && editingLink?.icon === 'upload') return iconUrls.get(editingLink.id);
+  return undefined;
+}
+function updatePreview() {
+  const f = $linkForm, box = $('#iconPreview'), url = normalizeUrl(f.url.value);
+  f.bgColor.hidden = f.bg.value !== 'custom';
+  if (!url) { box.className = 'icon'; box.style.background = ''; box.replaceChildren(); return; }
+  const link = { id: editingLink?.id, url, title: f.title.value.trim() || hostOf(url), bg: dlgBg(f) };
+  paintIcon(box, link, dlgIconSrc(f) ?? null);
+}
+
 function openLinkDlg(item, place = 'page') {
-  const f = $('#linkForm');
+  const f = $linkForm;
   editingLink = item || null;
+  setDlgIcon('keep');
   f.reset();
   $('#linkErr').textContent = '';
   $('#linkTitle').textContent = item ? 'Sửa lối tắt' : 'Thêm lối tắt';
   $('#placeRow').hidden = !!item;
   f.place.value = place;
-  if (item) { f.url.value = item.url; f.title.value = item.title; }
+  if (item) {
+    f.url.value = item.url;
+    f.title.value = item.title;
+    f.bg.value = !item.bg ? 'auto' : item.bg.startsWith('#') ? 'custom' : item.bg;
+    if (item.bg?.startsWith('#')) f.bgColor.value = item.bg;
+    if (item.icon && item.icon !== 'upload') f.iconUrl.value = item.icon;
+  }
+  updatePreview();
   $('#linkDlg').showModal();
 }
-$('#linkForm').addEventListener('submit', e => {
+$linkForm.addEventListener('input', e => { if (e.target.type !== 'file') updatePreview(); });
+
+// Uploaded icons are shrunk to 128px PNG so IndexedDB stays small.
+function toIconBlob(file) {
+  return new Promise((res, rej) => {
+    const src = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const n = 128, c = document.createElement('canvas'), k = Math.min(n / img.naturalWidth, n / img.naturalHeight, 1) || 1;
+      const w = img.naturalWidth * k || n, hh = img.naturalHeight * k || n;
+      c.width = c.height = n;
+      c.getContext('2d').drawImage(img, (n - w) / 2, (n - hh) / 2, w, hh);
+      URL.revokeObjectURL(src);
+      c.toBlob(b => (b ? res(b) : rej(new Error('encode'))), 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(src); rej(new Error('not an image')); };
+    img.src = src;
+  });
+}
+$('#iconFile').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const blob = await toIconBlob(file);
+    setDlgIcon({ blob, url: URL.createObjectURL(blob) });
+    $linkForm.iconUrl.value = '';
+    $('#linkErr').textContent = '';
+  } catch {
+    $('#linkErr').textContent = 'File này không phải ảnh.';
+  }
+  updatePreview();
+};
+$('#iconClear').onclick = () => {
+  setDlgIcon('none');
+  $linkForm.iconUrl.value = '';
+  updatePreview();
+};
+$('#linkDlg').addEventListener('close', () => setDlgIcon('keep'));
+
+$linkForm.addEventListener('submit', async e => {
   e.preventDefault();
-  const f = e.target, url = normalizeUrl(f.url.value);
-  if (!url) { $('#linkErr').textContent = 'Địa chỉ không hợp lệ (chỉ hỗ trợ http/https).'; return; }
-  const title = f.title.value.trim() || new URL(url).hostname.replace(/^www\./, '');
-  if (editingLink) Object.assign(editingLink, { url, title });
-  else (f.place.value === 'dock' ? state.dock : state.pages[curPage()]).push({ id: uid(), type: 'link', url, title });
+  const f = e.target, url = normalizeUrl(f.url.value), err = $('#linkErr');
+  if (!url) { err.textContent = 'Địa chỉ không hợp lệ (chỉ hỗ trợ http/https).'; return; }
+  const typed = f.iconUrl.value.trim(), iconUrl = typed ? normalizeUrl(typed) : null;
+  if (typed && !iconUrl) { err.textContent = 'Link ảnh icon không hợp lệ.'; return; }
+
+  const link = editingLink || { id: uid(), type: 'link' };
+  const bg = dlgBg(f);
+  Object.assign(link, { url, title: f.title.value.trim() || hostOf(url) });
+  if (bg) link.bg = bg;
+  else delete link.bg;
+  if (dlgIcon.blob) {
+    await setIcon(link.id, dlgIcon.blob);
+    link.icon = 'upload';
+  } else if (iconUrl) {
+    link.icon = iconUrl;
+  } else if (dlgIcon === 'none' || link.icon !== 'upload') {
+    delete link.icon;
+  }
+  if (!editingLink) (f.place.value === 'dock' ? state.dock : state.pages[curPage()]).push(link);
+  pruneIcons();
   save();
   render();
   if ($folderDlg.open) renderFolder();
   $('#linkDlg').close();
 });
+
+// Drop uploaded icons no link uses any more (deleted links, switched back to favicon, imports).
+function pruneIcons() {
+  const used = new Set(allItems().filter(i => i.icon === 'upload').map(i => i.id));
+  for (const id of iconUrls.keys()) if (!used.has(id)) setIcon(id, null);
+}
 $('#dockAdd').onclick = () => openLinkDlg(null, 'dock');
 
 $('#addBtn').onclick = () => $('#addDlg').showModal();
@@ -561,6 +705,7 @@ document.addEventListener('visibilitychange', async () => {
   if (document.hidden || editing) return;
   applyWall(); // picks up a new daily image after midnight
   replaceState(await loadState());
+  await loadIcons(); // another tab may have uploaded icons
   applySettings();
   syncSettingsUI();
   render();
@@ -568,6 +713,7 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 /* ---------- boot ---------- */
+await loadIcons();
 applySettings();
 syncSettingsUI();
 render();

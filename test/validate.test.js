@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { normalizeUrl, defaultState, validateState } from '../state.js';
+import { normalizeUrl, defaultState, validateState, needsDarkTile } from '../state.js';
 import { describeWeather } from '../weather.js';
 
 assert.equal(normalizeUrl('youtube.com'), 'https://youtube.com/');
@@ -54,6 +54,28 @@ assert.deepEqual(wc.settings.city, { name: 'Hà Nội', lat: 21.02, lon: 105.84 
 assert.equal(validateState({ ...d, settings: { ...d.settings, city: { name: 'x', lat: 999, lon: 0 } } }).settings.city, null);
 assert.equal(validateState({ ...d, settings: { ...d.settings, city: 'Hanoi' } }).settings.city, null);
 assert.equal(d.settings.city, null);
+
+// link appearance: bg + custom icon
+const ap = structuredClone(d);
+ap.dock = [
+  { id: 'l1', type: 'link', url: 'https://github.com/', title: 'GH', bg: 'DARK', icon: 'upload' },
+  { id: 'l2', type: 'link', url: 'https://x.com/', title: 'X', bg: '#1A2B3C', icon: 'cdn.x.com/i.png' },
+  { id: 'l3', type: 'link', url: 'https://y.com/', title: 'Y', bg: 'red; background:url(x)', icon: 'javascript:alert(1)' },
+];
+const apc = validateState(ap).dock;
+assert.deepEqual(apc[0], { id: 'l1', type: 'link', url: 'https://github.com/', title: 'GH', bg: 'dark', icon: 'upload' });
+assert.equal(apc[1].bg, '#1a2b3c');
+assert.equal(apc[1].icon, 'https://cdn.x.com/i.png');
+assert.ok(!('bg' in apc[2]) && !('icon' in apc[2]));
+
+// auto tile contrast: light logo on transparent → needs dark tile
+const px = (n, f) => { const a = new Uint8ClampedArray(n * n * 4); for (let i = 0; i < n * n; i++) a.set(f(i % n, Math.floor(i / n)), i * 4); return a; };
+const N = 32, inLogo = (x, y) => x > 8 && x < 24 && y > 8 && y < 24;
+assert.equal(needsDarkTile(px(N, () => [0, 0, 0, 0])), false);                                         // empty
+assert.equal(needsDarkTile(px(N, (x, y) => inLogo(x, y) ? [240, 240, 240, 255] : [0, 0, 0, 0])), true); // white logo
+assert.equal(needsDarkTile(px(N, (x, y) => inLogo(x, y) ? [20, 20, 20, 255] : [0, 0, 0, 0])), false);   // black logo
+assert.equal(needsDarkTile(px(N, () => [255, 255, 255, 255])), false);                                  // full-bleed white square
+assert.equal(needsDarkTile(px(N, (x, y) => inLogo(x, y) ? [230, 60, 40, 255] : [0, 0, 0, 0])), false);  // red logo
 
 // weather codes
 assert.deepEqual(describeWeather(0, true), { icon: '☀️', text: 'Trời quang' });

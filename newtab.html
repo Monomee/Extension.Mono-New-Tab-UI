@@ -47,6 +47,25 @@
     <h2 id="linkTitle">Thêm lối tắt</h2>
     <label>Địa chỉ<input name="url" placeholder="vd: youtube.com" required></label>
     <label>Tên<input name="title" placeholder="Tự lấy theo tên miền" maxlength="60"></label>
+    <div class="icon-edit">
+      <span id="iconPreview" class="icon" aria-hidden="true"></span>
+      <div class="icon-opts">
+        <label>Nền ô
+          <span class="inline">
+            <select name="bg">
+              <option value="auto">Tự động</option><option value="light">Sáng</option>
+              <option value="dark">Tối</option><option value="custom">Màu…</option>
+            </select>
+            <input type="color" name="bgColor" value="#ffffff" aria-label="Màu nền ô" hidden>
+          </span>
+        </label>
+        <label>Icon riêng<input name="iconUrl" placeholder="Link ảnh (tùy chọn)"></label>
+        <span class="inline">
+          <label class="btn">Tải ảnh lên<input type="file" id="iconFile" accept="image/*" hidden></label>
+          <button type="button" class="btn" id="iconClear">Dùng favicon</button>
+        </span>
+      </div>
+    </div>
     <label id="placeRow">Đặt ở
       <select name="place"><option value="page">Trang hiện tại</option><option value="dock">Dock</option></select>
     </label>

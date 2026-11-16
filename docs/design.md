@@ -18,6 +18,8 @@ Dùng cá nhân, ưu tiên **đẹp, mở tab là hiện ngay, tự chỉnh dễ
 - **v1.2 Thời tiết**: widget 2×2 / 4×2 (dự báo 5 ngày), Open-Meteo (không cần key), thành phố chọn qua geocoding, lưu `settings.city`; cache 30 phút.
 - **v1.2 Ảnh Bing mỗi ngày**: IndexedDB `{daily:'bing'}`; cache theo ngày (`bingCache`), lỗi mạng → ảnh cũ → gradient. Cần `host_permissions: https://www.bing.com/*` (Bing không có CORS).
 
+- **v1.3 Icon dễ nhìn**: tự đổi nền ô sang tối khi favicon là logo sáng trên nền trong suốt (`needsDarkTile`, đo 32×32 qua canvas; ảnh khác nguồn không đo được → giữ nền trắng). Hộp sửa lối tắt: nền ô Tự động/Sáng/Tối/màu (`link.bg`), icon riêng bằng link (`link.icon` = URL) hoặc tải lên (`link.icon = 'upload'`, PNG 128px trong IndexedDB store `icons` theo id). Ảnh tải lên không nằm trong file sao lưu.
+
 ## Chưa làm
 Pomodoro, đồng bộ giữa các máy, đổi kích thước widget bằng chuột.
 

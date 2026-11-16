@@ -48,7 +48,13 @@ function cleanItem(i, allowWidget) {
   const id = str(i.id, 40) || uid();
   if (i.type === 'link') {
     const url = normalizeUrl(i.url);
-    return url ? { id, type: 'link', url, title: str(i.title, 60) || new URL(url).hostname } : null;
+    if (!url) return null;
+    const out = { id, type: 'link', url, title: str(i.title, 60) || new URL(url).hostname };
+    const bg = str(i.bg, 10).toLowerCase();
+    if (/^(light|dark|#[0-9a-f]{6})$/.test(bg)) out.bg = bg;
+    const icon = i.icon === 'upload' ? 'upload' : normalizeUrl(i.icon); // 'upload' = blob in IndexedDB
+    if (icon) out.icon = icon;
+    return out;
   }
   if (allowWidget && i.type === 'folder' && Array.isArray(i.items)) {
     const items = i.items.slice(0, 100).map(x => cleanItem(x, false)).filter(Boolean); // links only, no nesting
@@ -59,6 +65,19 @@ function cleanItem(i, allowWidget) {
     return { id, type: 'widget', kind: i.kind, w: ok[0], h: ok[1] };
   }
   return null;
+}
+
+// RGBA pixels of a square icon → true when it's a light logo on transparency (e.g. GitHub/ChatGPT
+// favicons in OS dark mode) that would vanish on the default white tile.
+export function needsDarkTile(rgba) {
+  let opaque = 0, light = 0;
+  for (let i = 0; i < rgba.length; i += 4) {
+    if (rgba[i + 3] < 128) continue;
+    opaque++;
+    if ((0.2126 * rgba[i] + 0.7152 * rgba[i + 1] + 0.0722 * rgba[i + 2]) / 255 > 0.8) light++;
+  }
+  const total = rgba.length / 4;
+  return opaque > 0 && opaque < total * 0.9 && light / opaque > 0.6; // full-bleed icons keep their own bg
 }
 
 const cleanCity = c => {

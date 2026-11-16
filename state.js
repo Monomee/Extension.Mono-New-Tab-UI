@@ -1,4 +1,5 @@
 // Pure state helpers + chrome.storage persistence.
+import { t, browserLang, LANGS } from './i18n.js';
 export const WIDGET_SIZES = { clock: [[2, 2]], date: [[2, 2]], todo: [[2, 2]], note: [[4, 2], [2, 2]], weather: [[2, 2], [4, 2]] };
 export const ENGINES = {
   google: 'https://www.google.com/search',
@@ -35,7 +36,7 @@ export function defaultState() {
     ],
     notes: {},
     todos: {},
-    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null },
+    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null, lang: browserLang() },
   };
 }
 
@@ -58,7 +59,7 @@ function cleanItem(i, allowWidget) {
   }
   if (allowWidget && i.type === 'folder' && Array.isArray(i.items)) {
     const items = i.items.slice(0, 100).map(x => cleanItem(x, false)).filter(Boolean); // links only, no nesting
-    return items.length ? { id, type: 'folder', title: str(i.title, 40) || 'Thư mục', items } : null;
+    return items.length ? { id, type: 'folder', title: str(i.title, 40) || t('folder.default'), items } : null;
   }
   if (allowWidget && i.type === 'widget' && WIDGET_SIZES[i.kind]) {
     const ok = WIDGET_SIZES[i.kind].find(([w, h]) => w === i.w && h === i.h) || WIDGET_SIZES[i.kind][0];
@@ -88,7 +89,7 @@ const cleanCity = c => {
 
 // Untrusted input (imported JSON). Throws on wrong shape, drops bad items/unknown fields.
 export function validateState(obj) {
-  if (!isObj(obj) || !Array.isArray(obj.pages) || !Array.isArray(obj.dock)) throw new Error('File không đúng định dạng Mono New Tab');
+  if (!isObj(obj) || !Array.isArray(obj.pages) || !Array.isArray(obj.dock)) throw new Error('badFormat'); // app shows t('import.badFormat')
   const pages = obj.pages.filter(Array.isArray).map(p => p.map(i => cleanItem(i, true)).filter(Boolean));
   if (!pages.length) pages.push([]);
   const dock = obj.dock.map(i => cleanItem(i, false)).filter(Boolean);
@@ -108,6 +109,7 @@ export function validateState(obj) {
     dim: num(s.dim, 0, 0.8, 0.2),
     blur: num(s.blur, 0, 30, 0),
     city: cleanCity(s.city),
+    lang: LANGS.includes(s.lang) ? s.lang : 'vi', // missing → vi: existing installs predate the setting
   };
   return { version: 1, pages, dock, notes, todos, settings };
 }

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { normalizeUrl, defaultState, validateState, needsDarkTile } from '../state.js';
 import { describeWeather } from '../weather.js';
+import { STRINGS, t, setLang } from '../i18n.js';
 
 assert.equal(normalizeUrl('youtube.com'), 'https://youtube.com/');
 assert.equal(normalizeUrl('  http://a.vn/x '), 'http://a.vn/x');
@@ -76,6 +78,28 @@ assert.equal(needsDarkTile(px(N, (x, y) => inLogo(x, y) ? [240, 240, 240, 255] :
 assert.equal(needsDarkTile(px(N, (x, y) => inLogo(x, y) ? [20, 20, 20, 255] : [0, 0, 0, 0])), false);   // black logo
 assert.equal(needsDarkTile(px(N, () => [255, 255, 255, 255])), false);                                  // full-bleed white square
 assert.equal(needsDarkTile(px(N, (x, y) => inLogo(x, y) ? [230, 60, 40, 255] : [0, 0, 0, 0])), false);  // red logo
+
+// i18n: both dictionaries have exactly the same keys and placeholders
+const vk = Object.keys(STRINGS.vi).sort(), ek = Object.keys(STRINGS.en).sort();
+assert.deepEqual(ek, vk);
+const ph = s => (s.match(/\{\w+\}/g) || []).sort().join();
+for (const k of vk) if (k !== 'date.month') assert.equal(ph(STRINGS.en[k]), ph(STRINGS.vi[k]), k);
+const html = readFileSync(new URL('../newtab.html', import.meta.url), 'utf8');
+const htmlKeys = [...html.matchAll(/data-i18n(?:-ph|-title|-aria)?="([^"]+)"/g)].map(m => m[1]);
+assert.ok(htmlKeys.length > 50);
+assert.deepEqual(htmlKeys.filter(k => !(k in STRINGS.vi)), []); // no typo'd keys in the page
+assert.equal(t('page.n', { n: 3 }), 'Trang 3');
+setLang('en');
+assert.equal(t('page.n', { n: 3 }), 'Page 3');
+assert.equal(describeWeather(63, true).text, 'Rain');
+setLang('xx');
+assert.equal(t('done'), 'Xong'); // unknown lang → vi
+// settings.lang: kept if valid, missing → vi (existing installs stay Vietnamese)
+assert.equal(validateState({ ...d, settings: { ...d.settings, lang: 'en' } }).settings.lang, 'en');
+assert.equal(validateState({ ...d, settings: { ...d.settings, lang: 'fr' } }).settings.lang, 'vi');
+const noLang = structuredClone(d); delete noLang.settings.lang;
+assert.equal(validateState(noLang).settings.lang, 'vi');
+assert.ok(['vi', 'en'].includes(d.settings.lang));
 
 // weather codes
 assert.deepEqual(describeWeather(0, true), { icon: '☀️', text: 'Trời quang' });

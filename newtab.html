@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tab mới</title>
+<title data-i18n="tab.title">Tab mới</title>
 <link rel="icon" href="icons/icon32.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Text here is the Vietnamese fallback; i18n.js (data-i18n*) replaces it with the chosen language. -->
 <div id="wall"></div>
 <div id="dim"></div>
 <a id="wallCaption" target="_blank" rel="noopener" hidden></a>
@@ -15,29 +16,29 @@
 <header id="top">
   <form id="search" class="glass" role="search">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input name="q" placeholder="Tìm kiếm trên web" autocomplete="off" aria-label="Tìm kiếm">
+    <input name="q" placeholder="Tìm kiếm trên web" autocomplete="off" aria-label="Tìm kiếm" data-i18n-ph="search.ph" data-i18n-aria="search.aria">
   </form>
   <div class="tools">
-    <button id="addBtn" class="tool glass edit-only" title="Thêm" aria-label="Thêm">
+    <button id="addBtn" class="tool glass edit-only" title="Thêm" aria-label="Thêm" data-i18n-title="add" data-i18n-aria="add">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
     </button>
-    <button id="editBtn" class="tool glass" title="Chỉnh sửa màn hình" aria-label="Chỉnh sửa">
+    <button id="editBtn" class="tool glass" title="Chỉnh sửa màn hình" aria-label="Chỉnh sửa" data-i18n-title="edit.title" data-i18n-aria="edit.aria">
       <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
     </button>
-    <button id="doneBtn" class="tool glass done edit-only">Xong</button>
-    <button id="setBtn" class="tool glass" title="Cài đặt" aria-label="Cài đặt">
+    <button id="doneBtn" class="tool glass done edit-only" data-i18n="done">Xong</button>
+    <button id="setBtn" class="tool glass" title="Cài đặt" aria-label="Cài đặt" data-i18n-title="settings" data-i18n-aria="settings">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
   </div>
 </header>
 
 <main id="pages"></main>
-<nav id="dots" aria-label="Trang"></nav>
+<nav id="dots" aria-label="Trang" data-i18n-aria="pages"></nav>
 
 <footer id="dock" class="glass">
   <div id="dockList"></div>
   <span class="sep"></span>
-  <button id="dockAdd" class="dock-add" title="Thêm vào dock" aria-label="Thêm vào dock">
+  <button id="dockAdd" class="dock-add" title="Thêm vào dock" aria-label="Thêm vào dock" data-i18n-title="dock.add" data-i18n-aria="dock.add">
     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
   </button>
 </footer>
@@ -45,82 +46,82 @@
 <dialog id="linkDlg" class="glass sheet">
   <form id="linkForm">
     <h2 id="linkTitle">Thêm lối tắt</h2>
-    <label>Địa chỉ<input name="url" placeholder="vd: youtube.com" required></label>
-    <label>Tên<input name="title" placeholder="Tự lấy theo tên miền" maxlength="60"></label>
+    <label><span data-i18n="link.url">Địa chỉ</span><input name="url" placeholder="vd: youtube.com" data-i18n-ph="link.url.ph" required></label>
+    <label><span data-i18n="link.name">Tên</span><input name="title" placeholder="Tự lấy theo tên miền" data-i18n-ph="link.name.ph" maxlength="60"></label>
     <div class="icon-edit">
       <span id="iconPreview" class="icon" aria-hidden="true"></span>
       <div class="icon-opts">
-        <label>Nền ô
+        <label><span data-i18n="link.bg">Nền ô</span>
           <span class="inline">
             <select name="bg">
-              <option value="auto">Tự động</option><option value="light">Sáng</option>
-              <option value="dark">Tối</option><option value="custom">Màu…</option>
+              <option value="auto" data-i18n="bg.auto">Tự động</option><option value="light" data-i18n="bg.light">Sáng</option>
+              <option value="dark" data-i18n="bg.dark">Tối</option><option value="custom" data-i18n="bg.custom">Màu…</option>
             </select>
-            <input type="color" name="bgColor" value="#ffffff" aria-label="Màu nền ô" hidden>
+            <input type="color" name="bgColor" value="#ffffff" aria-label="Màu nền ô" data-i18n-aria="bg.color" hidden>
           </span>
         </label>
-        <label>Icon riêng<input name="iconUrl" placeholder="Link ảnh (tùy chọn)"></label>
+        <label><span data-i18n="link.icon">Icon riêng</span><input name="iconUrl" placeholder="Link ảnh (tùy chọn)" data-i18n-ph="link.icon.ph"></label>
         <span class="inline">
-          <label class="btn">Tải ảnh lên<input type="file" id="iconFile" accept="image/*" hidden></label>
-          <button type="button" class="btn" id="iconClear">Dùng favicon</button>
+          <label class="btn"><span data-i18n="link.upload">Tải ảnh lên</span><input type="file" id="iconFile" accept="image/*" hidden></label>
+          <button type="button" class="btn" id="iconClear" data-i18n="link.favicon">Dùng favicon</button>
         </span>
       </div>
     </div>
-    <label id="placeRow">Đặt ở
-      <select name="place"><option value="page">Trang hiện tại</option><option value="dock">Dock</option></select>
+    <label id="placeRow"><span data-i18n="link.place">Đặt ở</span>
+      <select name="place"><option value="page" data-i18n="place.page">Trang hiện tại</option><option value="dock" data-i18n="place.dock">Dock</option></select>
     </label>
     <p class="err" id="linkErr"></p>
     <div class="row">
-      <button type="button" class="btn" data-close>Hủy</button>
-      <button class="btn primary">Lưu</button>
+      <button type="button" class="btn" data-close data-i18n="cancel">Hủy</button>
+      <button class="btn primary" data-i18n="save">Lưu</button>
     </div>
   </form>
 </dialog>
 
 <dialog id="addDlg" class="glass sheet">
-  <h2>Thêm vào màn hình</h2>
+  <h2 data-i18n="addDlg.title">Thêm vào màn hình</h2>
   <div class="add-grid">
-    <button class="btn" data-add="link">Lối tắt</button>
-    <button class="btn" data-add="clock">Đồng hồ</button>
-    <button class="btn" data-add="date">Ngày</button>
-    <button class="btn" data-add="todo">Việc cần làm</button>
-    <button class="btn" data-add="note-4">Ghi chú (lớn)</button>
-    <button class="btn" data-add="note-2">Ghi chú (nhỏ)</button>
-    <button class="btn" data-add="weather-2">Thời tiết (nhỏ)</button>
-    <button class="btn" data-add="weather-4">Thời tiết (lớn)</button>
+    <button class="btn" data-add="link" data-i18n="add.link">Lối tắt</button>
+    <button class="btn" data-add="clock" data-i18n="add.clock">Đồng hồ</button>
+    <button class="btn" data-add="date" data-i18n="add.date">Ngày</button>
+    <button class="btn" data-add="todo" data-i18n="add.todo">Việc cần làm</button>
+    <button class="btn" data-add="note-4" data-i18n="add.note4">Ghi chú (lớn)</button>
+    <button class="btn" data-add="note-2" data-i18n="add.note2">Ghi chú (nhỏ)</button>
+    <button class="btn" data-add="weather-2" data-i18n="add.weather2">Thời tiết (nhỏ)</button>
+    <button class="btn" data-add="weather-4" data-i18n="add.weather4">Thời tiết (lớn)</button>
   </div>
-  <div class="row"><button class="btn" data-close>Đóng</button></div>
+  <div class="row"><button class="btn" data-close data-i18n="close">Đóng</button></div>
 </dialog>
 
 <dialog id="folderDlg" class="folder-dlg">
   <div class="folder-panel">
-    <input id="folderTitle" class="folder-title" maxlength="40" aria-label="Tên thư mục">
+    <input id="folderTitle" class="folder-title" maxlength="40" aria-label="Tên thư mục" data-i18n-aria="folder.name">
     <div id="folderGrid" class="folder-grid"></div>
   </div>
 </dialog>
 
-<aside id="settings" class="glass" aria-label="Cài đặt" inert>
-  <div class="set-head"><h2>Cài đặt</h2><button class="btn" id="setClose">Đóng</button></div>
+<aside id="settings" class="glass" aria-label="Cài đặt" data-i18n-aria="settings" inert>
+  <div class="set-head"><h2 data-i18n="settings">Cài đặt</h2><button class="btn" id="setClose" data-i18n="close">Đóng</button></div>
 
   <section>
-    <h3>Ảnh nền</h3>
+    <h3 data-i18n="set.wall">Ảnh nền</h3>
     <div class="row wrap">
-      <label class="btn">Chọn ảnh từ máy<input type="file" id="wallFile" accept="image/*" hidden></label>
-      <button class="btn" id="wallDaily">Ảnh Bing mỗi ngày</button>
-      <button class="btn" id="wallReset">Mặc định</button>
+      <label class="btn"><span data-i18n="wall.file">Chọn ảnh từ máy</span><input type="file" id="wallFile" accept="image/*" hidden></label>
+      <button class="btn" id="wallDaily" data-i18n="wall.daily">Ảnh Bing mỗi ngày</button>
+      <button class="btn" id="wallReset" data-i18n="wall.reset">Mặc định</button>
     </div>
     <form class="row" id="wallUrlForm">
-      <input name="url" placeholder="Hoặc dán link ảnh (https://…)">
-      <button class="btn">Dùng</button>
+      <input name="url" placeholder="Hoặc dán link ảnh (https://…)" data-i18n-ph="wall.url.ph">
+      <button class="btn" data-i18n="wall.use">Dùng</button>
     </form>
-    <label>Làm tối nền <input type="range" id="dimRange" min="0" max="0.8" step="0.05"></label>
-    <label>Làm mờ nền <input type="range" id="blurRange" min="0" max="30" step="1"></label>
+    <label><span data-i18n="wall.dim">Làm tối nền</span> <input type="range" id="dimRange" min="0" max="0.8" step="0.05"></label>
+    <label><span data-i18n="wall.blur">Làm mờ nền</span> <input type="range" id="blurRange" min="0" max="30" step="1"></label>
   </section>
 
   <section>
-    <h3>Tìm kiếm</h3>
-    <label class="check"><input type="checkbox" id="searchOn"> Hiện thanh tìm kiếm</label>
-    <label>Công cụ
+    <h3 data-i18n="set.search">Tìm kiếm</h3>
+    <label class="check"><input type="checkbox" id="searchOn"> <span data-i18n="search.show">Hiện thanh tìm kiếm</span></label>
+    <label><span data-i18n="search.engine">Công cụ</span>
       <select id="engineSel">
         <option value="google">Google</option><option value="bing">Bing</option><option value="duckduckgo">DuckDuckGo</option>
       </select>
@@ -128,12 +129,20 @@
   </section>
 
   <section>
-    <h3>Sao lưu</h3>
+    <h3 data-i18n="set.lang">Ngôn ngữ</h3>
+    <!-- Language names stay in their own language so either can be found. -->
+    <select id="langSel" aria-label="Ngôn ngữ / Language">
+      <option value="vi">Tiếng Việt</option><option value="en">English</option>
+    </select>
+  </section>
+
+  <section>
+    <h3 data-i18n="set.backup">Sao lưu</h3>
     <div class="row wrap">
-      <button class="btn" id="exportBtn">Xuất file JSON</button>
-      <label class="btn">Nhập file JSON<input type="file" id="importFile" accept=".json,application/json" hidden></label>
+      <button class="btn" id="exportBtn" data-i18n="backup.export">Xuất file JSON</button>
+      <label class="btn"><span data-i18n="backup.import">Nhập file JSON</span><input type="file" id="importFile" accept=".json,application/json" hidden></label>
     </div>
-    <p class="hint">Ảnh nền tải từ máy không nằm trong file sao lưu.</p>
+    <p class="hint" data-i18n="backup.hint">Ảnh nền và icon tải từ máy không nằm trong file sao lưu.</p>
   </section>
 
   <p class="msg" id="setMsg" role="status"></p>

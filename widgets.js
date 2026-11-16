@@ -1,6 +1,7 @@
 // Widget renderers. Each returns the inner content for a .widget element.
 import { uid } from './state.js';
 import { renderWeather } from './weather.js';
+import { t, locale } from './i18n.js';
 
 export const h = (tag, cls, text) => {
   const el = document.createElement(tag);
@@ -44,8 +45,8 @@ export function tick() {
     c.querySelector('.min').setAttribute('transform', `rotate(${min * 6})`);
     c.querySelector('.sec').setAttribute('transform', `rotate(${sec * 6})`);
   }
-  const dow = d.toLocaleDateString('vi-VN', { weekday: 'long' });
-  const mon = `Tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
+  const dow = d.toLocaleDateString(locale(), { weekday: 'long' });
+  const mon = t('date.month', { m: d.getMonth() + 1, y: d.getFullYear(), month: d.toLocaleDateString(locale(), { month: 'long' }) });
   for (const w of document.querySelectorAll('[data-kind="date"]')) {
     w.querySelector('.dow').textContent = dow;
     w.querySelector('.day').textContent = d.getDate();
@@ -55,14 +56,14 @@ export function tick() {
 
 function note(item, { state, save }) {
   const ta = h('textarea', 'w-note');
-  ta.placeholder = 'Viết gì đó…';
+  ta.placeholder = t('note.ph');
   ta.value = state.notes[item.id] || '';
-  let t;
+  let timer;
   ta.addEventListener('input', () => {
-    clearTimeout(t);
-    t = setTimeout(() => { state.notes[item.id] = ta.value; save(); }, 500);
+    clearTimeout(timer);
+    timer = setTimeout(() => { state.notes[item.id] = ta.value; save(); }, 500);
   });
-  return [h('div', 'w-title', 'Ghi chú'), ta];
+  return [h('div', 'w-title', t('note.title')), ta];
 }
 
 function todo(item, { state, save }) {
@@ -70,28 +71,28 @@ function todo(item, { state, save }) {
   const list = h('ul', 'todo-list');
   const form = h('form', 'todo-add');
   const input = h('input');
-  input.placeholder = '+ Thêm việc';
+  input.placeholder = t('todo.ph');
   input.maxLength = 500;
   form.append(input);
 
   const items = () => (state.todos[item.id] ||= []);
   const draw = () => {
     const all = items();
-    title.textContent = `Việc cần làm · ${all.filter(t => !t.done).length}`;
-    list.replaceChildren(...[...all].sort((a, b) => a.done - b.done).map(t => {
-      const li = h('li', t.done ? 'done' : '');
+    title.textContent = t('todo.title', { n: all.filter(x => !x.done).length });
+    list.replaceChildren(...[...all].sort((a, b) => a.done - b.done).map(it => {
+      const li = h('li', it.done ? 'done' : '');
       const cb = h('input');
       cb.type = 'checkbox';
-      cb.checked = t.done;
-      cb.addEventListener('change', () => { t.done = cb.checked; save(); draw(); });
+      cb.checked = it.done;
+      cb.addEventListener('change', () => { it.done = cb.checked; save(); draw(); });
       const x = h('button', 'todo-del', '×');
       x.type = 'button';
-      x.title = 'Xóa';
+      x.title = t('del');
       x.addEventListener('click', () => {
-        state.todos[item.id] = items().filter(o => o !== t);
+        state.todos[item.id] = items().filter(o => o !== it);
         save(); draw();
       });
-      li.append(cb, h('span', null, t.text), x);
+      li.append(cb, h('span', null, it.text), x);
       return li;
     }));
   };

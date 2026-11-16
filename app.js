@@ -1,6 +1,7 @@
 /* global Sortable */
 import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES } from './state.js';
 import { renderWidget, tick } from './widgets.js';
+import { t, setLang, translateDom } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 const h = (tag, cls, text) => {
@@ -116,6 +117,8 @@ function applySettings() {
   root.setProperty('--bg-blur', s.blur + 'px');
   document.body.classList.toggle('no-search', !s.search);
   $('#search').action = ENGINES[s.engine];
+  setLang(s.lang);
+  translateDom();
 }
 
 /* ---------- items ---------- */
@@ -207,7 +210,7 @@ function itemEl(item) {
     el.append(...renderWidget(item, ctx));
   }
   const del = h('button', 'del', '×');
-  del.title = 'Xóa';
+  del.title = t('del');
   el.append(del);
   return el;
 }
@@ -268,7 +271,7 @@ function mergeInto(targetId, dragId) {
   const page = state.pages.find(p => p.includes(target));
   if (!page) return state.pages[curPage()].push(drag); // target vanished: don't lose the link
   if (target.type === 'folder') target.items.push(drag);
-  else page[page.indexOf(target)] = { id: uid(), type: 'folder', title: 'Thư mục', items: [target, drag] };
+  else page[page.indexOf(target)] = { id: uid(), type: 'folder', title: t('folder.default'), items: [target, drag] };
 }
 
 const readBox = (box, byId) => [...box.querySelectorAll(':scope > .item')].map(el => byId.get(el.dataset.id)).filter(Boolean);
@@ -326,7 +329,7 @@ const goPage = i => {
 function renderDots() {
   $dots.replaceChildren(...state.pages.map((_, i) => {
     const b = h('button');
-    b.ariaLabel = `Trang ${i + 1}`;
+    b.ariaLabel = t('page.n', { n: i + 1 });
     b.onclick = () => goPage(i);
     return b;
   }));
@@ -415,8 +418,8 @@ function removeItem(id) {
   const it = findItem(id);
   if (!it) return;
   if (it.type === 'folder') {
-    if (!confirm(`Xóa thư mục "${it.title}" cùng ${it.items.length} lối tắt bên trong?`)) return;
-  } else if (((state.notes[id] || '').trim() || state.todos[id]?.length) && !confirm('Widget này vẫn còn nội dung. Xóa luôn?')) return;
+    if (!confirm(t('confirm.folder', { name: it.title, n: it.items.length }))) return;
+  } else if (((state.notes[id] || '').trim() || state.todos[id]?.length) && !confirm(t('confirm.widget'))) return;
   const keep = i => i.id !== id;
   state.pages = state.pages.map(p => p.filter(keep));
   state.dock = state.dock.filter(keep);
@@ -474,7 +477,7 @@ function folderDrop(id) {
 $('#folderTitle').onchange = e => {
   const f = findItem(openFolderId);
   if (!f) return;
-  f.title = e.target.value.trim().slice(0, 40) || 'Thư mục';
+  f.title = e.target.value.trim().slice(0, 40) || t('folder.default');
   save();
   render();
 };
@@ -515,7 +518,7 @@ function openLinkDlg(item, place = 'page') {
   setDlgIcon('keep');
   f.reset();
   $('#linkErr').textContent = '';
-  $('#linkTitle').textContent = item ? 'Sửa lối tắt' : 'Thêm lối tắt';
+  $('#linkTitle').textContent = t(item ? 'link.edit' : 'link.add');
   $('#placeRow').hidden = !!item;
   f.place.value = place;
   if (item) {
@@ -556,7 +559,7 @@ $('#iconFile').onchange = async e => {
     $linkForm.iconUrl.value = '';
     $('#linkErr').textContent = '';
   } catch {
-    $('#linkErr').textContent = 'File này không phải ảnh.';
+    $('#linkErr').textContent = t('err.notImage');
   }
   updatePreview();
 };
@@ -570,9 +573,9 @@ $('#linkDlg').addEventListener('close', () => setDlgIcon('keep'));
 $linkForm.addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target, url = normalizeUrl(f.url.value), err = $('#linkErr');
-  if (!url) { err.textContent = 'Địa chỉ không hợp lệ (chỉ hỗ trợ http/https).'; return; }
+  if (!url) { err.textContent = t('err.url'); return; }
   const typed = f.iconUrl.value.trim(), iconUrl = typed ? normalizeUrl(typed) : null;
-  if (typed && !iconUrl) { err.textContent = 'Link ảnh icon không hợp lệ.'; return; }
+  if (typed && !iconUrl) { err.textContent = t('err.iconUrl'); return; }
 
   const link = editingLink || { id: uid(), type: 'link' };
   const bg = dlgBg(f);
@@ -633,36 +636,43 @@ function syncSettingsUI() {
   $('#blurRange').value = s.blur;
   $('#searchOn').checked = s.search;
   $('#engineSel').value = s.engine;
+  $('#langSel').value = s.lang;
 }
 const setSetting = (k, v) => { state.settings[k] = v; applySettings(); save(); };
 $('#dimRange').oninput = e => setSetting('dim', +e.target.value);
 $('#blurRange').oninput = e => setSetting('blur', +e.target.value);
 $('#searchOn').onchange = e => setSetting('search', e.target.checked);
 $('#engineSel').onchange = e => setSetting('engine', e.target.value);
+$('#langSel').onchange = e => {
+  setSetting('lang', e.target.value); // applySettings → setLang + translateDom
+  render(); // widgets & dots build their text in JS
+  if ($folderDlg.open) renderFolder();
+  msg('');
+};
 
 $('#wallFile').onchange = async e => {
   const f = e.target.files[0];
   e.target.value = '';
   if (!f) return;
-  if (!f.type.startsWith('image/')) return msg('File này không phải ảnh.', true);
+  if (!f.type.startsWith('image/')) return msg(t('err.notImage'), true);
   await putWall(f);
   await applyWall();
-  msg('Đã đổi ảnh nền.');
+  msg(t('msg.wallChanged'));
 };
 $('#wallUrlForm').addEventListener('submit', async e => {
   e.preventDefault();
   const url = normalizeUrl(e.target.url.value);
-  if (!url || !(await loads(url))) return msg('Không tải được ảnh từ link này.', true);
+  if (!url || !(await loads(url))) return msg(t('msg.wallUrlFail'), true);
   await putWall({ url });
   await applyWall();
   e.target.reset();
-  msg('Đã đổi ảnh nền.');
+  msg(t('msg.wallChanged'));
 });
-$('#wallReset').onclick = async () => { await putWall(null); await applyWall(); msg('Đã về nền mặc định.'); };
+$('#wallReset').onclick = async () => { await putWall(null); await applyWall(); msg(t('msg.wallReset')); };
 $('#wallDaily').onclick = async () => {
   await putWall({ daily: 'bing' });
   await applyWall();
-  msg($('#wall').style.backgroundImage ? 'Ảnh nền sẽ tự đổi mỗi ngày.' : 'Không tải được ảnh Bing, thử lại sau.', !$('#wall').style.backgroundImage);
+  msg(t($('#wall').style.backgroundImage ? 'msg.wallDaily' : 'msg.bingFail'), !$('#wall').style.backgroundImage);
 };
 
 $('#exportBtn').onclick = async () => {
@@ -673,13 +683,13 @@ $('#exportBtn').onclick = async () => {
   a.download = `mono-newtab-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  msg('Đã xuất file sao lưu.');
+  msg(t('msg.exported'));
 };
 $('#importFile').onchange = async e => {
   const f = e.target.files[0];
   e.target.value = '';
   if (!f) return;
-  if (f.size > 5e6) return msg('File quá lớn (tối đa 5MB).', true);
+  if (f.size > 5e6) return msg(t('msg.tooBig'), true);
   let next, wall;
   try {
     const raw = JSON.parse(await f.text());
@@ -687,16 +697,16 @@ $('#importFile').onchange = async e => {
     const wallUrl = normalizeUrl(raw.wallpaperUrl);
     wall = raw.wallpaperDaily === true ? { daily: 'bing' } : wallUrl ? { url: wallUrl } : null;
   } catch (err) {
-    return msg('Không nhập được: ' + (err instanceof SyntaxError ? 'file không phải JSON hợp lệ.' : err.message), true);
+    return msg(t('msg.importFail', { reason: t(err instanceof SyntaxError ? 'import.notJson' : 'import.badFormat') }), true);
   }
-  if (!confirm('Thay toàn bộ màn hình hiện tại bằng dữ liệu trong file?')) return;
+  if (!confirm(t('confirm.import'))) return;
   replaceState(next);
   await save();
   if (wall) { await putWall(wall); await applyWall(); }
   applySettings();
   syncSettingsUI();
   render();
-  msg('Đã khôi phục từ file sao lưu.');
+  msg(t('msg.imported'));
 };
 
 /* ---------- other tabs ---------- */

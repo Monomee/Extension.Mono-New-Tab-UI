@@ -20,6 +20,8 @@ Dùng cá nhân, ưu tiên **đẹp, mở tab là hiện ngay, tự chỉnh dễ
 
 - **v1.3 Icon dễ nhìn**: tự đổi nền ô sang tối khi favicon là logo sáng trên nền trong suốt (`needsDarkTile`, đo 32×32 qua canvas; ảnh khác nguồn không đo được → giữ nền trắng). Hộp sửa lối tắt: nền ô Tự động/Sáng/Tối/màu (`link.bg`), icon riêng bằng link (`link.icon` = URL) hoặc tải lên (`link.icon = 'upload'`, PNG 128px trong IndexedDB store `icons` theo id). Ảnh tải lên không nằm trong file sao lưu.
 
+- **v1.4 Ngôn ngữ vi/en**: `i18n.js` (từ điển + `t()`, `translateDom()` qua `data-i18n`, `-ph`, `-title`, `-aria`), `settings.lang`; cài mới theo ngôn ngữ trình duyệt, dữ liệu cũ thiếu `lang` → `vi`. Ngày/thứ dùng `Intl` theo ngôn ngữ. Test bắt buộc hai từ điển cùng key và mọi key trong HTML tồn tại. Tên thư mục đã đặt là dữ liệu người dùng, không dịch.
+
 ## Chưa làm
 Pomodoro, đồng bộ giữa các máy, đổi kích thước widget bằng chuột.
 

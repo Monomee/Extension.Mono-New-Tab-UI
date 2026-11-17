@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { normalizeUrl, defaultState, validateState, needsDarkTile } from '../state.js';
+import { normalizeUrl, defaultState, validateState, needsDarkTile, placeItems, overlaps } from '../state.js';
 import { describeWeather } from '../weather.js';
 import { STRINGS, t, setLang } from '../i18n.js';
 
@@ -100,6 +100,26 @@ assert.equal(validateState({ ...d, settings: { ...d.settings, lang: 'fr' } }).se
 const noLang = structuredClone(d); delete noLang.settings.lang;
 assert.equal(validateState(noLang).settings.lang, 'vi');
 assert.ok(['vi', 'en'].includes(d.settings.lang));
+
+// free placement: saved cells kept, gaps allowed, collisions/legacy items take first free cell, overflow returned
+const L = (id, x, y) => ({ id, type: 'link', url: 'https://a.vn/', title: id, x, y });
+const W = (id, x, y) => ({ id, type: 'widget', kind: 'note', w: 4, h: 2, x, y });
+const items = [L('a', 5, 3), W('n', 0, 0), L('b', 1, 1), L('old'), L('c', 5, 3)];
+const over = placeItems(items, 6, 4);
+assert.deepEqual(over, []);
+const at = id => items.find(i => i.id === id);
+assert.deepEqual([at('a').x, at('a').y], [5, 3]);   // gap kept
+assert.deepEqual([at('n').x, at('n').y], [0, 0]);
+assert.deepEqual([at('b').x, at('b').y], [4, 0]);   // was under the note → first free cell
+assert.deepEqual([at('old').x, at('old').y], [5, 0]);
+assert.deepEqual([at('c').x, at('c').y], [4, 1]);   // collided with a
+assert.deepEqual(placeItems([L('x'), L('y'), L('z')], 2, 1).map(i => i.id), ['z']);
+assert.deepEqual(overlaps(items, at('b'), 0, 1).map(i => i.id), ['n']);
+const pos = structuredClone(d);
+pos.pages[0][0].x = 3; pos.pages[0][0].y = 2; pos.pages[0][1].x = -1; pos.dock[0].x = 1; pos.dock[0].y = 1;
+const pc = validateState(pos);
+assert.deepEqual([pc.pages[0][0].x, pc.pages[0][0].y], [3, 2]);
+assert.ok(!('x' in pc.pages[0][1]) && !('x' in pc.dock[0]));
 
 // weather codes
 assert.deepEqual(describeWeather(0, true), { icon: '☀️', text: 'Trời quang' });

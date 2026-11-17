@@ -104,8 +104,8 @@ body.editing #editBtn { display: none; }
   scroll-snap-align: start;
   display: grid;
   grid-template-columns: repeat(auto-fill, var(--cell));
+  grid-template-rows: repeat(auto-fill, var(--cell));
   grid-auto-rows: var(--cell);
-  grid-auto-flow: dense;
   gap: var(--gap);
   justify-content: center; align-content: start;
   padding: 8px max(32px, calc((100% - 1100px) / 2));
@@ -329,6 +329,8 @@ body.editing .page:empty { outline: 2px dashed rgba(255, 255, 255, .3); outline-
 @keyframes wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
 @keyframes wiggle-sm { from { transform: rotate(-.5deg); } to { transform: rotate(.5deg); } }
 .sortable-ghost { opacity: .35; }
+.slot { border-radius: 20px; background: rgba(255, 255, 255, .16); outline: 2px dashed rgba(255, 255, 255, .55); outline-offset: -2px; pointer-events: none; }
+.slot.bad { background: rgba(255, 69, 58, .18); outline-color: rgba(255, 69, 58, .6); }
 .sortable-chosen { animation: none !important; }
 
 /* ---------- dialogs & settings ---------- */

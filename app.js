@@ -1,5 +1,5 @@
 /* global Sortable */
-import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES } from './state.js';
+import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES, sizeOf, overlaps, placeItems } from './state.js';
 import { renderWidget, tick } from './widgets.js';
 import { t, setLang, translateDom } from './i18n.js';
 
@@ -107,7 +107,7 @@ const allItems = () => {
 };
 // Folder with 0 items disappears, with 1 item dissolves back into a link (iOS behaviour).
 const normalizeFolders = () => {
-  state.pages = state.pages.map(p => p.flatMap(i => (i.type !== 'folder' || i.items.length > 1 ? [i] : i.items)));
+  state.pages = state.pages.map(p => p.flatMap(i => (i.type !== 'folder' || i.items.length > 1 ? [i] : i.items.map(l => ({ ...l, x: i.x, y: i.y })))));
 };
 const findItem = id => allItems().find(i => i.id === id);
 
@@ -225,24 +225,29 @@ const sortOpts = where => ({
   emptyInsertThreshold: 40,
   forceFallback: true, // mouse-event drag: consistent ghost, works for all inputs
   fallbackTolerance: 4,
-  onStart: evt => { dragging = true; dragEl = evt.item; },
-  // Hovering a dragged link over the centre of another page link/folder targets it for merging
-  // instead of swapping places.
-  onMove: evt => {
-    const rel = evt.related;
-    const mergeable = evt.dragged.dataset.type === 'link' && rel.closest('#pages') && rel.matches('.link, .folder');
-    if (mergeable && overCentre(rel)) { setDropTarget(rel); return false; }
-    setDropTarget(null);
-    return true;
+  draggable: '.item',
+  onStart: evt => {
+    dragging = true;
+    dragEl = evt.item;
+    lastXY = downXY;
+    const r = evt.item.getBoundingClientRect();
+    grab = [downXY[0] - r.left, downXY[1] - r.top];
   },
+  // Pages never reorder the DOM: the drop cell comes from the pointer on release.
+  // Merging (link onto the centre of a link/folder) is tracked by the pointermove handler.
+  onMove: evt => !evt.to.classList.contains('page'),
   onEnd: evt => {
     dragging = false;
     dragEl = null;
+    swallowClick = true; // the release click would otherwise hit empty page = "done"
+    $slot.remove();
     const target = dropTarget && overCentre(dropTarget) ? dropTarget.dataset.id : null;
     setDropTarget(null);
+    const onPages = !target && editing && inside($pages, lastXY);
     setTimeout(() => {
-      readDom();
-      if (target) mergeInto(target, evt.item.dataset.id);
+      if (target) { readDom(); mergeInto(target, evt.item.dataset.id); }
+      else if (onPages) dropOnPage(evt.item.dataset.id); // refused drop leaves state as-is = snap back
+      else readDom(); // dock reorder, page → dock
       normalizeFolders();
       save();
       render();
@@ -250,7 +255,53 @@ const sortOpts = where => ({
   },
 });
 
-let dropTarget = null, dragEl = null;
+let dropTarget = null, dragEl = null, grab = [0, 0], downXY = [0, 0];
+const inside = (el, [x, y]) => {
+  const r = el.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+};
+const gridOf = pg => {
+  const cs = getComputedStyle(pg), tracks = cs.gridTemplateColumns.split(' ');
+  return { cs, cols: tracks.length, rows: cs.gridTemplateRows.split(' ').length, step: parseFloat(tracks[0]) + parseFloat(cs.columnGap) };
+};
+// Top-left cell the dragged item would land on, given where it was grabbed.
+function cellAt(pg, it) {
+  const { cs, cols, rows, step } = gridOf(pg), r = pg.getBoundingClientRect(), [w, hh] = sizeOf(it);
+  const x0 = r.left + (r.width - cols * step + parseFloat(cs.columnGap)) / 2; // tracks are centred
+  const y0 = r.top + parseFloat(cs.paddingTop);
+  const clamp = (v, hi) => Math.max(0, Math.min(hi, v));
+  return {
+    x: clamp(Math.round((lastXY[0] - grab[0] - x0) / step), cols - w),
+    y: clamp(Math.round((lastXY[1] - grab[1] - y0) / step), rows - hh),
+  };
+}
+// Free cell → move there. One same-size item on the same page → swap. Anything else → refuse.
+function dropCheck(it, c) {
+  const page = state.pages[curPage()], hit = overlaps(page, it, c.x, c.y);
+  if (!hit.length) return { ok: true };
+  const [a, b] = [sizeOf(it), sizeOf(hit[0])];
+  return { ok: hit.length === 1 && page.includes(it) && a[0] === b[0] && a[1] === b[1], swap: hit[0] };
+}
+function dropOnPage(id) {
+  const it = findItem(id), pg = $pages.children[curPage()];
+  if (!it || !pg) return;
+  const c = cellAt(pg, it), d = dropCheck(it, c);
+  if (!d.ok) return;
+  if (d.swap) Object.assign(d.swap, { x: it.x, y: it.y });
+  state.pages = state.pages.map(p => p.filter(i => i !== it));
+  state.dock = state.dock.filter(i => i !== it);
+  Object.assign(it, c);
+  state.pages[curPage()].push(it);
+}
+const $slot = h('div', 'slot');
+function showSlot() {
+  const pg = $pages.children[curPage()], it = findItem(dragEl.dataset.id);
+  if (!pg || !it || dropTarget || !inside($pages, lastXY)) return $slot.remove();
+  const c = cellAt(pg, it), [w, hh] = sizeOf(it);
+  $slot.style.gridArea = `${c.y + 1} / ${c.x + 1} / span ${hh} / span ${w}`;
+  $slot.classList.toggle('bad', !dropCheck(it, c).ok);
+  if ($slot.parentElement !== pg) pg.append($slot);
+}
 const setDropTarget = el => {
   if (dropTarget === el) return;
   dropTarget?.classList.remove('drop-target');
@@ -271,7 +322,7 @@ function mergeInto(targetId, dragId) {
   const page = state.pages.find(p => p.includes(target));
   if (!page) return state.pages[curPage()].push(drag); // target vanished: don't lose the link
   if (target.type === 'folder') target.items.push(drag);
-  else page[page.indexOf(target)] = { id: uid(), type: 'folder', title: t('folder.default'), items: [target, drag] };
+  else page[page.indexOf(target)] = { id: uid(), type: 'folder', title: t('folder.default'), items: [target, drag], x: target.x, y: target.y };
 }
 
 const readBox = (box, byId) => [...box.querySelectorAll(':scope > .item')].map(el => byId.get(el.dataset.id)).filter(Boolean);
@@ -281,33 +332,41 @@ function readDom() {
   state.dock = readBox($dockList, byId);
 }
 
-// Push items that overflow a page onto the next one (iPad-style).
-// ponytail: runs on render only, not on window resize — a smaller window just clips until the next edit.
-function reflow() {
-  let moved = false;
-  if ($pages.clientHeight < 100) return moved; // not laid out yet
-  const pgs = [...$pages.children];
-  for (let i = 0; i < pgs.length; i++) {
-    while (pgs[i].scrollHeight > pgs[i].clientHeight + 1 && pgs[i].children.length > 1) {
-      if (!pgs[i + 1]) $pages.append(pgs[i + 1] = h('section', 'page'));
-      pgs[i + 1].prepend(pgs[i].lastElementChild);
-      moved = true;
-    }
+// Give every page item a cell; what doesn't fit moves to the next page (iPad-style).
+// ponytail: a narrower window re-packs and saves positions; widening again doesn't restore them.
+function layout() {
+  const probe = h('section', 'page');
+  $pages.append(probe);
+  const { cols, rows } = gridOf(probe);
+  probe.remove();
+  if ($pages.clientHeight < 100 || !cols || !rows) return; // not laid out yet
+  const before = JSON.stringify(state.pages);
+  for (let i = 0; i < state.pages.length; i++) {
+    const over = placeItems(state.pages[i], cols, rows);
+    if (!over.length) continue;
+    state.pages[i] = state.pages[i].filter(x => !over.includes(x));
+    for (const o of over) { delete o.x; delete o.y; } // take free cells on the next page
+    (state.pages[i + 1] ??= []).unshift(...over);
   }
-  return moved;
+  if (JSON.stringify(state.pages) !== before) save();
 }
+const placed = (el, i) => {
+  const [w, hh] = sizeOf(i);
+  if (Number.isInteger(i.x)) el.style.gridArea = `${i.y + 1} / ${i.x + 1} / span ${hh} / span ${w}`;
+  return el;
+};
 
 function render() {
-  if (editing && state.pages.at(-1).length) state.pages.push([]); // spare page to drop into
   const left = $pages.scrollLeft;
   sortables.forEach(s => s.destroy());
+  layout();
+  if (editing && state.pages.at(-1).length) state.pages.push([]); // spare page to drop into
   $pages.replaceChildren(...state.pages.map(p => {
     const pg = h('section', 'page');
-    pg.append(...p.map(itemEl));
+    pg.append(...p.map(i => placed(itemEl(i), i)));
     return pg;
   }));
   $dockList.replaceChildren(...state.dock.map(itemEl));
-  if (reflow()) { readDom(); save(); return render(); }
   sortables = [...$pages.children, $dockList].map(box => Sortable.create(box, sortOpts(box === $dockList ? 'dock' : 'page')));
   $pages.scrollLeft = left;
   renderDots();
@@ -361,6 +420,7 @@ document.addEventListener('pointermove', e => {
     const over = document.elementFromPoint(...lastXY)?.closest('#pages .link, #pages .folder');
     setDropTarget(over && over !== dragEl && overCentre(over) ? over : null);
   }
+  if (dragEl && editing) showSlot();
   if (!editing || $('#folderDlg').open) return; // no page flips while a folder is open
   const dir = e.clientX < 60 ? -1 : e.clientX > innerWidth - 60 ? 1 : 0;
   if (!dir || Date.now() - flipAt < 800) return;
@@ -392,6 +452,7 @@ document.addEventListener('keydown', e => {
 let pressTimer, pressXY, swallowClick = false;
 document.addEventListener('pointerdown', e => {
   swallowClick = false;
+  downXY = [e.clientX, e.clientY];
   if (editing || e.button !== 0 || !e.target.closest('#pages, #dock, #folderGrid')) return;
   if (e.target.closest('input, textarea, button, .todo-list')) return;
   pressXY = [e.clientX, e.clientY];
@@ -467,6 +528,7 @@ function folderDrop(id) {
   if (x < r.left || x > r.right || y < r.top || y > r.bottom) {
     const it = f.items.find(i => i.id === id);
     f.items = f.items.filter(i => i !== it);
+    delete it.x; delete it.y; // first free cell
     state.pages[curPage()].push(it);
   }
   normalizeFolders();
@@ -728,3 +790,5 @@ applySettings();
 syncSettingsUI();
 render();
 setInterval(tick, 1000);
+let resizeT;
+addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (!dragging) render(); }, 200); });

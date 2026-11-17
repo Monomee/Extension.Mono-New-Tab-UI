@@ -134,4 +134,11 @@ assert.equal(describeWeather(0, false).icon, '🌙');
 assert.equal(describeWeather(63, true).text, 'Mưa');
 assert.equal(describeWeather(12345, true).text, 'Không rõ');
 
+// manifest strings come from _locales; every locale has the same keys
+const manifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
+const msgs = l => JSON.parse(readFileSync(new URL(`../_locales/${l}/messages.json`, import.meta.url), 'utf8'));
+for (const l of ['en', 'vi']) for (const k of ['name', 'description']) assert.ok(msgs(l)[k]?.message, `${l}.${k}`);
+assert.equal(manifest.name, '__MSG_name__');
+assert.ok(msgs(manifest.default_locale));
+
 console.log('ok');

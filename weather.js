@@ -90,7 +90,7 @@ function setupForm(box, ctx, onCancel) {
     x.onclick = onCancel;
     head.append(' · ', x);
   }
-  box.classList.remove('wide');
+  box.classList.remove('wide', 'tall');
   box.replaceChildren(head, form, list);
   input.focus({ preventScroll: true });
 }
@@ -111,7 +111,8 @@ function show(box, item, ctx, data) {
     h('div', 'wx-desc', now.text),
     h('div', 'wx-range', t('wx.range', { max: deg(d.temperature_2m_max[0]), min: deg(d.temperature_2m_min[0]) })),
   );
-  box.classList.toggle('wide', item.w >= 4);
+  box.classList.toggle('wide', item.w >= 4 && item.h < 4);
+  box.classList.toggle('tall', item.h >= 4);
   if (item.w < 4) return box.replaceChildren(main);
 
   const days = h('div', 'wx-days');

@@ -226,6 +226,13 @@ body.editing .drop-target { animation: none; }
 [data-kind="date"] .dow { color: var(--danger); font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 [data-kind="date"] .day { font-size: 84px; font-weight: 300; line-height: 1; margin: 4px 0 6px; letter-spacing: -.03em; }
 [data-kind="date"] .mon { color: var(--ink-soft); font-size: 14px; font-weight: 500; }
+/* 4×4: month calendar */
+[data-kind="date"][data-w="4"] { justify-content: flex-start; padding: 20px 22px; }
+[data-kind="date"][data-w="4"] .day { display: none; }
+[data-kind="date"][data-w="4"] .mon { color: var(--ink); font-size: 20px; font-weight: 700; margin: 2px 0 12px; }
+.cal { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 1fr; place-items: center; font-size: 14px; font-weight: 500; }
+.cal .wd { color: var(--ink-soft); font-size: 12px; font-weight: 600; }
+.cal .today { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--danger); color: #fff; font-weight: 700; }
 
 /* note */
 [data-kind="note"] .w-title { color: #b88a00; }
@@ -245,6 +252,10 @@ body.editing .drop-target { animation: none; }
 [data-kind="weather"] .w-title { color: #fff; }
 .wx { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
 .wx.wide { flex-direction: row; gap: 18px; }
+.wx.tall .wx-days { flex-direction: column; padding: 10px 0 0; border-left: 0; border-top: 1px solid rgba(255, 255, 255, .25); }
+.wx.tall .wx-day { flex-direction: row; gap: 10px; }
+.wx.tall .wx-day > :first-child { flex: 1; }
+.wx.tall .wx-day > :last-child { width: 3ch; text-align: right; }
 .wx-now { flex: none; display: flex; flex-direction: column; position: relative; min-width: 150px; }
 .wx-link { border: 0; background: none; padding: 0; cursor: pointer; color: inherit; font: inherit; text-align: left; }
 .wx-link:hover { text-decoration: underline; }
@@ -323,7 +334,14 @@ body.editing .del { display: block; }
 body.editing .item { cursor: grab; animation: wiggle .28s ease-in-out infinite alternate; }
 body.editing .item:nth-child(2n) { animation-delay: -.14s; animation-direction: alternate-reverse; }
 body.editing .widget { animation-name: wiggle-sm; }
-body.editing .widget > :not(.del) { pointer-events: none; }
+body.editing .widget > :not(.del, .resize) { pointer-events: none; }
+.resize {
+  display: none; position: absolute; right: -6px; bottom: -6px; z-index: 2;
+  width: 26px; height: 26px; border-radius: 50%; border: 0; padding: 0; cursor: nwse-resize; touch-action: none;
+  background: rgba(60, 60, 67, .85); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.resize::after { content: ""; position: absolute; inset: 8px; border: solid #fff; border-width: 0 2px 2px 0; border-radius: 0 0 3px 0; }
+body.editing .resize { display: block; }
 body.editing .link a:hover .icon { transform: none; }
 body.editing .page:empty { outline: 2px dashed rgba(255, 255, 255, .3); outline-offset: -16px; border-radius: 32px; }
 @keyframes wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }

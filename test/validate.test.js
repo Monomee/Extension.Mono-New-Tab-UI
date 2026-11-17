@@ -121,6 +121,13 @@ const pc = validateState(pos);
 assert.deepEqual([pc.pages[0][0].x, pc.pages[0][0].y], [3, 2]);
 assert.ok(!('x' in pc.pages[0][1]) && !('x' in pc.dock[0]));
 
+// widget sizes: allowed ones kept, others fall back to the kind's default
+const sz = (kind, w, hh) => validateState({ ...d, pages: [[{ id: 'z', type: 'widget', kind, w, h: hh }]] }).pages[0][0];
+assert.deepEqual([sz('todo', 4, 4).w, sz('todo', 4, 4).h], [4, 4]);
+assert.deepEqual([sz('date', 4, 4).w, sz('date', 4, 4).h], [4, 4]);
+assert.deepEqual([sz('date', 4, 2).w, sz('date', 4, 2).h], [2, 2]);
+assert.deepEqual([sz('clock', 4, 4).w, sz('clock', 4, 4).h], [2, 2]);
+
 // weather codes
 assert.deepEqual(describeWeather(0, true), { icon: '☀️', text: 'Trời quang' });
 assert.equal(describeWeather(0, false).icon, '🌙');

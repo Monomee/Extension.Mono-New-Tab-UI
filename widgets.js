@@ -32,8 +32,23 @@ function clock() {
   return [s];
 }
 
-function date() {
-  return [h('div', 'dow'), h('div', 'day'), h('div', 'mon')];
+function date(item) {
+  return [h('div', 'dow'), h('div', 'day'), h('div', 'mon'), ...(item.w >= 4 ? [h('div', 'cal')] : [])];
+}
+
+// Monday-first month grid; rebuilt only when the day changes.
+function fillCal(cal, d) {
+  const key = d.toDateString() + locale();
+  if (cal.dataset.key === key) return;
+  cal.dataset.key = key;
+  const lead = (new Date(d.getFullYear(), d.getMonth(), 1).getDay() + 6) % 7;
+  const days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  const wd = i => new Date(2024, 0, 1 + i).toLocaleDateString(locale(), { weekday: 'narrow' }); // 2024-01-01 = Monday
+  cal.replaceChildren(
+    ...Array.from({ length: 7 }, (_, i) => h('span', 'wd', wd(i))),
+    ...Array.from({ length: lead }, () => h('span')),
+    ...Array.from({ length: days }, (_, i) => h('span', i + 1 === d.getDate() ? 'today' : '', i + 1)),
+  );
 }
 
 // Update every clock/date widget on screen. Called once per second.
@@ -51,6 +66,8 @@ export function tick() {
     w.querySelector('.dow').textContent = dow;
     w.querySelector('.day').textContent = d.getDate();
     w.querySelector('.mon').textContent = mon;
+    const cal = w.querySelector('.cal');
+    if (cal) fillCal(cal, d);
   }
 }
 

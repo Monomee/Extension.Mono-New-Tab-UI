@@ -1,6 +1,6 @@
 // Pure state helpers + chrome.storage persistence.
 import { t, browserLang, LANGS } from './i18n.js';
-export const WIDGET_SIZES = { clock: [[2, 2]], date: [[2, 2]], todo: [[2, 2]], note: [[4, 2], [2, 2]], weather: [[2, 2], [4, 2]] };
+export const WIDGET_SIZES = { clock: [[2, 2]], date: [[2, 2], [4, 4]], todo: [[2, 2], [2, 4], [4, 4]], note: [[4, 2], [2, 2], [4, 4]], weather: [[2, 2], [4, 2], [4, 4]] }; // first = default
 export const ENGINES = {
   google: 'https://www.google.com/search',
   bing: 'https://www.bing.com/search',

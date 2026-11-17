@@ -208,6 +208,11 @@ function itemEl(item) {
     el.classList.add('glass');
     Object.assign(el.dataset, { kind: item.kind, w: item.w, h: item.h });
     el.append(...renderWidget(item, ctx));
+    if (WIDGET_SIZES[item.kind].length > 1) {
+      const rs = h('button', 'resize');
+      rs.title = rs.ariaLabel = t('resize');
+      el.append(rs);
+    }
   }
   const del = h('button', 'del', '×');
   del.title = t('del');
@@ -220,7 +225,7 @@ const sortOpts = where => ({
   group: { name: 'home', put: where === 'dock' ? (to, from, el) => el.dataset.type === 'link' : true },
   animation: 200,
   disabled: !editing,
-  filter: '.del',
+  filter: '.del, .resize',
   preventOnFilter: false,
   emptyInsertThreshold: 40,
   forceFallback: true, // mouse-event drag: consistent ghost, works for all inputs
@@ -378,6 +383,59 @@ function syncFromDom() {
   save();
   render();
 }
+
+/* ---------- widget resize ---------- */
+// Drag the corner handle: snaps to the nearest allowed size that fits from the widget's top-left.
+// Click/Enter cycles sizes. Items the bigger widget covers move to free cells (or the next page).
+let resizing = null;
+function fittingSizes(it) {
+  const { cols, rows } = gridOf($pages.children[curPage()]);
+  return WIDGET_SIZES[it.kind].filter(([w, hh]) => it.x + w <= cols && it.y + hh <= rows);
+}
+function applySize(it, [w, hh]) {
+  if (it.w === w && it.h === hh) return;
+  Object.assign(it, { w, h: hh });
+  for (const o of overlaps(state.pages.find(p => p.includes(it)) || [], it, it.x, it.y)) { delete o.x; delete o.y; }
+  save();
+  render();
+}
+document.addEventListener('pointerdown', e => {
+  const rs = e.target.closest('#pages .resize');
+  if (!rs || !editing) return;
+  const it = findItem(rs.parentElement.dataset.id);
+  resizing = { it, el: rs.parentElement, xy: [e.clientX, e.clientY], moved: false, size: [it.w, it.h] };
+  rs.setPointerCapture(e.pointerId);
+});
+document.addEventListener('pointermove', e => {
+  const r = resizing;
+  if (!r) return;
+  if (!r.moved && Math.hypot(e.clientX - r.xy[0], e.clientY - r.xy[1]) < 4) return;
+  r.moved = true;
+  const { step } = gridOf(r.el.parentElement), box = r.el.getBoundingClientRect();
+  const dw = (e.clientX - box.left) / step, dh = (e.clientY - box.top) / step;
+  const dist = ([w, hh]) => Math.abs(w - dw) + Math.abs(hh - dh);
+  r.size = fittingSizes(r.it).reduce((a, b) => (dist(b) < dist(a) ? b : a), r.size);
+  $slot.style.gridArea = `${r.it.y + 1} / ${r.it.x + 1} / span ${r.size[1]} / span ${r.size[0]}`;
+  $slot.classList.remove('bad');
+  if ($slot.parentElement !== r.el.parentElement) r.el.parentElement.append($slot);
+});
+for (const ev of ['pointerup', 'pointercancel']) document.addEventListener(ev, () => {
+  const r = resizing;
+  if (!r?.moved) return;
+  setTimeout(() => (resizing = null)); // after the click it triggers
+  $slot.remove();
+  applySize(r.it, r.size);
+});
+document.addEventListener('click', e => {
+  const rs = e.target.closest('#pages .resize');
+  if (!rs) return;
+  e.stopImmediatePropagation();
+  if (resizing?.moved) return;
+  resizing = null;
+  const it = findItem(rs.parentElement.dataset.id), sizes = fittingSizes(it);
+  const i = sizes.findIndex(([w, hh]) => w === it.w && hh === it.h);
+  if (sizes.length) applySize(it, sizes[(i + 1) % sizes.length]);
+}, true);
 
 /* ---------- pages & dots ---------- */
 const curPage = () => Math.round($pages.scrollLeft / $pages.clientWidth) || 0;
@@ -673,9 +731,8 @@ $('#addDlg').addEventListener('click', e => {
   if (!k) return;
   $('#addDlg').close();
   if (k === 'link') return openLinkDlg(null, 'page');
-  const [kind, w] = k.split('-');
-  const [dw, dh] = WIDGET_SIZES[kind].find(s => s[0] === +w) || WIDGET_SIZES[kind][0];
-  state.pages[curPage()].push({ id: uid(), type: 'widget', kind, w: dw, h: dh });
+  const [w, hh] = WIDGET_SIZES[k][0];
+  state.pages[curPage()].push({ id: uid(), type: 'widget', kind: k, w, h: hh });
   save();
   render();
 });

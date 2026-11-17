@@ -17,8 +17,8 @@ export const STRINGS = {
     'link.place': 'Đặt ở', 'place.page': 'Trang hiện tại', 'place.dock': 'Dock',
 
     'addDlg.title': 'Thêm vào màn hình', 'add.link': 'Lối tắt', 'add.clock': 'Đồng hồ', 'add.date': 'Ngày',
-    'add.todo': 'Việc cần làm', 'add.note4': 'Ghi chú (lớn)', 'add.note2': 'Ghi chú (nhỏ)',
-    'add.weather2': 'Thời tiết (nhỏ)', 'add.weather4': 'Thời tiết (lớn)',
+    'add.todo': 'Việc cần làm', 'add.note': 'Ghi chú',
+    'add.weather': 'Thời tiết', 'resize': 'Kéo để đổi cỡ',
 
     'folder.default': 'Thư mục', 'folder.name': 'Tên thư mục',
     'confirm.folder': 'Xóa thư mục "{name}" cùng {n} lối tắt bên trong?',
@@ -67,8 +67,8 @@ export const STRINGS = {
     'link.place': 'Place in', 'place.page': 'Current page', 'place.dock': 'Dock',
 
     'addDlg.title': 'Add to home screen', 'add.link': 'Shortcut', 'add.clock': 'Clock', 'add.date': 'Date',
-    'add.todo': 'To-do', 'add.note4': 'Note (large)', 'add.note2': 'Note (small)',
-    'add.weather2': 'Weather (small)', 'add.weather4': 'Weather (large)',
+    'add.todo': 'To-do', 'add.note': 'Note',
+    'add.weather': 'Weather', 'resize': 'Drag to resize',
 
     'folder.default': 'Folder', 'folder.name': 'Folder name',
     'confirm.folder': 'Delete folder "{name}" and the {n} shortcuts inside?',

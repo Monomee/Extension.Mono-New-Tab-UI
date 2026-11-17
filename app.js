@@ -725,7 +725,22 @@ function pruneIcons() {
 }
 $('#dockAdd').onclick = () => openLinkDlg(null, 'dock');
 
-$('#addBtn').onclick = () => $('#addDlg').showModal();
+// Live mini previews of each widget at its default size; throwaway state so nothing gets saved.
+$('#addBtn').onclick = () => {
+  const ctx0 = { state: { notes: {}, todos: {}, settings: state.settings }, save() {}, render() {} };
+  for (const b of $('#addDlg').querySelectorAll('.add-w')) {
+    const kind = b.dataset.add, [w, hh] = WIDGET_SIZES[kind][0];
+    const el = h('div', 'widget glass'), box = h('div', 'add-prev');
+    Object.assign(el.dataset, { kind, w, h: hh });
+    el.append(...renderWidget({ id: 'preview', type: 'widget', kind, w, h: hh }, ctx0));
+    box.inert = true;
+    box.append(el);
+    b.querySelector('.add-prev')?.remove();
+    b.prepend(box);
+  }
+  tick();
+  $('#addDlg').showModal();
+};
 $('#addDlg').addEventListener('click', e => {
   const k = e.target.closest('[data-add]')?.dataset.add;
   if (!k) return;

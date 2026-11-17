@@ -390,6 +390,12 @@ input[type="range"] { accent-color: var(--accent); }
 input[type="color"] { width: 40px; height: 36px; padding: 0; border: 0; background: none; cursor: pointer; }
 .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 .add-grid .btn { padding: 14px; }
+.add-link { grid-column: 1 / -1; }
+.add-w { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 8px !important; }
+/* real widget, shrunk: 2×2 → ~74px tall */
+.add-prev { height: 76px; display: grid; place-items: center; pointer-events: none; }
+.add-prev .widget { zoom: .38; width: calc(var(--cell) * 2 + var(--gap)); height: calc(var(--cell) * 2 + var(--gap)); text-align: left; }
+.add-prev .widget[data-w="4"] { width: calc(var(--cell) * 4 + var(--gap) * 3); }
 
 #settings {
   position: fixed; top: 16px; right: 16px; bottom: 16px; z-index: 10;

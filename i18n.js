@@ -42,6 +42,7 @@ export const STRINGS = {
     'spot.history': 'Lịch sử', 'spot.go': 'Mở trang',
     'set.apps': 'Tab & ứng dụng', 'apps.switch': 'Bấm icon thì chuyển sang tab đang mở',
     'apps.switch.hint': 'Tắt thì bấm icon luôn mở trang như bình thường.',
+    'apps.after': 'Sau khi chuyển sang tab đang mở', 'apps.after.close': 'Đóng tab mới này', 'apps.after.keep': 'Giữ lại tab mới này',
     'set.backup': 'Sao lưu', 'backup.export': 'Xuất file JSON', 'backup.import': 'Nhập file JSON',
     'backup.hint': 'Ảnh nền và icon tải từ máy không nằm trong file sao lưu.',
 
@@ -106,6 +107,7 @@ export const STRINGS = {
     'spot.history': 'History', 'spot.go': 'Open page',
     'set.apps': 'Tabs & apps', 'apps.switch': 'Clicking an icon switches to its open tab',
     'apps.switch.hint': 'When off, icons always open the page as usual.',
+    'apps.after': 'After switching to an open tab', 'apps.after.close': 'Close this new tab', 'apps.after.keep': 'Keep this new tab',
     'set.backup': 'Backup', 'backup.export': 'Export JSON', 'backup.import': 'Import JSON',
     'backup.hint': "Uploaded wallpapers and icons aren't included in backups.",
 

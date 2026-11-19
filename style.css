@@ -614,6 +614,8 @@ input[type="color"] { width: 40px; height: 36px; padding: 0; border: 0; backgrou
 }
 #settings.open { transform: none; }
 #settings section { padding: 16px 0; border-top: 1px solid var(--glass-line); }
+.after-switch { margin-top: 12px; }
+#settings:has(#switchTab:not(:checked)) .after-switch { opacity: .45; pointer-events: none; } /* only matters when switching is on */
 .set-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .set-head h2 { margin: 0; }
 .hint { font-size: 12px; color: var(--ink-soft); margin: 0; }

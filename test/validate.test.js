@@ -155,8 +155,12 @@ assert.equal(pickTab(tabs, 'https://a.vn').id, 2);
 assert.equal(pickTab(tabs, 'https://a.vn/x').id, 1);
 assert.equal(pickTab(tabs, 'https://c.vn/'), null);
 assert.equal(validateState({ ...d, settings: { ...d.settings, switchTab: false } }).settings.switchTab, false);
-const old = structuredClone(d); delete old.settings.switchTab;
+const old = structuredClone(d); delete old.settings.switchTab; delete old.settings.afterSwitch;
+const cc0 = v => validateState({ ...d, settings: { ...d.settings, ...v } }).settings;
 assert.equal(validateState(old).settings.switchTab, true); // older installs: on
+assert.equal(validateState(old).settings.afterSwitch, 'close'); // older installs: same as before
+assert.equal(cc0({ afterSwitch: 'keep' }).afterSwitch, 'keep');
+assert.equal(cc0({ afterSwitch: 'nope' }).afterSwitch, 'close');
 assert.equal(validateState(old).settings.mode, 'ios');
 assert.equal(validateState({ ...d, settings: { ...d.settings, mode: 'mac' } }).settings.mode, 'mac');
 assert.equal(validateState({ ...d, settings: { ...d.settings, mode: 'android' } }).settings.mode, 'ios');

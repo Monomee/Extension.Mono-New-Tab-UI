@@ -37,7 +37,7 @@ export function defaultState() {
     ],
     notes: {},
     todos: {},
-    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null, lang: browserLang(), switchTab: true, mode: 'ios', theme: 'auto', focus: false, lock: 5 },
+    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null, lang: browserLang(), switchTab: true, afterSwitch: 'close', mode: 'ios', theme: 'auto', focus: false, lock: 5 },
   };
 }
 
@@ -143,6 +143,7 @@ export function validateState(obj) {
     city: cleanCity(s.city),
     lang: LANGS.includes(s.lang) ? s.lang : 'vi', // missing → vi: existing installs predate the setting
     switchTab: s.switchTab !== false,
+    afterSwitch: s.afterSwitch === 'keep' ? 'keep' : 'close',
     mode: MODES.includes(s.mode) ? s.mode : 'ios',
     theme: ['auto', 'light', 'dark'].includes(s.theme) ? s.theme : 'auto',
     focus: s.focus === true,

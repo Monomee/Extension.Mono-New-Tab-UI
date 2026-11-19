@@ -787,6 +787,7 @@ function syncSettingsUI() {
   $('#engineSel').value = s.engine;
   $('#langSel').value = s.lang;
   $('#switchTab').checked = s.switchTab;
+  $('#afterSwitch').value = s.afterSwitch;
   $('#modeSel').value = s.mode;
   $('#themeSel').value = s.theme;
   $('#lockSel').value = s.lock;
@@ -803,6 +804,7 @@ $('#blurRange').oninput = e => setSetting('blur', +e.target.value);
 $('#searchOn').onchange = e => setSetting('search', e.target.checked);
 $('#engineSel').onchange = e => setSetting('engine', e.target.value);
 $('#switchTab').onchange = e => setSetting('switchTab', e.target.checked);
+$('#afterSwitch').onchange = e => setSetting('afterSwitch', e.target.value);
 $('#modeSel').onchange = e => setSetting('mode', e.target.value);
 $('#themeSel').onchange = e => setSetting('theme', e.target.value);
 $('#lockSel').onchange = e => setSetting('lock', +e.target.value);
@@ -909,7 +911,7 @@ async function switchTo(tab) {
   leave();
 }
 async function leave() {
-  if (!selfTab || history.length > 1) return;
+  if (state.settings.afterSwitch === 'keep' || !selfTab || history.length > 1) return;
   const siblings = await chrome.tabs.query({ windowId: selfTab.windowId });
   if (siblings.length > 1) chrome.tabs.remove(selfTab.id);
 }

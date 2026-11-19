@@ -86,7 +86,7 @@ const vk = Object.keys(STRINGS.vi).sort(), ek = Object.keys(STRINGS.en).sort();
 assert.deepEqual(ek, vk);
 const ph = s => (s.match(/\{\w+\}/g) || []).sort().join();
 for (const k of vk) if (k !== 'date.month') assert.equal(ph(STRINGS.en[k]), ph(STRINGS.vi[k]), k);
-const html = readFileSync(new URL('../newtab.html', import.meta.url), 'utf8');
+const html = ['newtab', 'popup', 'panel'].map(f => readFileSync(new URL(`../${f}.html`, import.meta.url), 'utf8')).join('');
 const htmlKeys = [...html.matchAll(/data-i18n(?:-ph|-title|-aria)?="([^"]+)"/g)].map(m => m[1]);
 assert.ok(htmlKeys.length > 50);
 assert.deepEqual(htmlKeys.filter(k => !(k in STRINGS.vi)), []); // no typo'd keys in the page
@@ -139,7 +139,7 @@ assert.equal(describeWeather(12345, true).text, 'Không rõ');
 // manifest strings come from _locales; every locale has the same keys
 const manifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
 const msgs = l => JSON.parse(readFileSync(new URL(`../_locales/${l}/messages.json`, import.meta.url), 'utf8'));
-for (const l of ['en', 'vi']) for (const k of ['name', 'description']) assert.ok(msgs(l)[k]?.message, `${l}.${k}`);
+for (const l of ['en', 'vi']) for (const k of ['name', 'description', 'actionTitle']) assert.ok(msgs(l)[k]?.message, `${l}.${k}`);
 assert.equal(manifest.name, '__MSG_name__');
 assert.ok(msgs(manifest.default_locale));
 
@@ -194,6 +194,19 @@ const { avgColor } = await import('../switcher.js');
 assert.deepEqual(avgColor(px(4, x => (x < 2 ? [200, 0, 0, 255] : [255, 255, 255, 255]))), [200, 0, 0]);
 assert.deepEqual(avgColor(px(4, x => (x < 2 ? [0, 0, 200, 255] : [0, 255, 0, 0]))), [0, 0, 200]);
 assert.equal(avgColor(px(4, () => [255, 255, 255, 255])), null);
+
+// popup / omnibox / side panel helpers
+const { allLinks } = await import('../tabs.js');
+const { bestAction, omniText } = await import('../spotlight.js');
+const al = structuredClone(d);
+al.pages[0].push({ id: 'f', type: 'folder', title: 'F', items: [{ id: 'x', type: 'link', url: 'https://x.vn/', title: 'X' }, { id: 'g2', type: 'link', url: 'https://github.com/', title: 'GH dup' }] });
+assert.deepEqual(allLinks(al).map(l => l.title), ['Google', 'YouTube', 'Gmail', 'Facebook', 'GitHub', 'Reddit', 'X']);
+assert.deepEqual(bestAction(' vnexpress.net ', [{ kind: 'link', url: 'https://a/' }]), { kind: 'go', url: 'https://vnexpress.net/' });
+assert.equal(bestAction('git', [{ kind: 'tab', url: 'https://github.com/' }]).kind, 'tab');
+assert.deepEqual(bestAction('zzz qq', []), { kind: 'web', title: 'zzz qq' });
+assert.equal(omniText({ title: '<b>A&B</b>', url: 'https://a.vn/x' }, 'Tab'), '&#60;b&#62;A&#38;B&#60;/b&#62; <dim>· Tab</dim> <url>a.vn/x</url>');
+assert.equal(validateState(old).settings.sidePanel, false);
+assert.equal(cc0({ sidePanel: true }).sidePanel, true);
 
 const { shortTime } = await import('../device.js');
 const nine = new Date(2026, 0, 1, 21, 41);

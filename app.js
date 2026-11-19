@@ -2,7 +2,7 @@
 import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES, sizeOf, overlaps, placeItems } from './state.js';
 import { renderWidget, tick } from './widgets.js';
 import { t, setLang, translateDom, locale } from './i18n.js';
-import { tabsFor, pickTab } from './tabs.js';
+import { tabsFor, pickTab, faviconUrl } from './tabs.js';
 import { initSpotlight, MORE, fold, score } from './spotlight.js';
 import { applyMode, initBar, initLock } from './device.js';
 import { initSwitcher } from './switcher.js';
@@ -129,7 +129,6 @@ function applySettings() {
 }
 
 /* ---------- items ---------- */
-const faviconUrl = u => `${chrome.runtime.getURL('/_favicon/')}?pageUrl=${encodeURIComponent(u)}&size=64`;
 
 const hostOf = url => new URL(url).hostname.replace(/^www\./, '');
 const hueOf = s => {
@@ -788,6 +787,7 @@ function syncSettingsUI() {
   $('#langSel').value = s.lang;
   $('#switchTab').checked = s.switchTab;
   $('#afterSwitch').value = s.afterSwitch;
+  $('#sidePanelOn').checked = s.sidePanel;
   $('#modeSel').value = s.mode;
   $('#themeSel').value = s.theme;
   $('#lockSel').value = s.lock;
@@ -805,6 +805,17 @@ $('#searchOn').onchange = e => setSetting('search', e.target.checked);
 $('#engineSel').onchange = e => setSetting('engine', e.target.value);
 $('#switchTab').onchange = e => setSetting('switchTab', e.target.checked);
 $('#afterSwitch').onchange = e => setSetting('afterSwitch', e.target.value);
+$('#sidePanelOn').onchange = e => {
+  const on = e.target.checked;
+  // open() needs the click's user gesture: call it before any await. background.js keeps it in sync after.
+  chrome.sidePanel.setOptions({ enabled: on });
+  if (on && selfTab) chrome.sidePanel.open({ windowId: selfTab.windowId }).catch(() => {});
+  setSetting('sidePanel', on);
+};
+$('#shortcutBtn').onclick = () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+chrome.commands.getAll().then(cs => {
+  $('#shortcutKey').textContent = cs.find(c => c.name === '_execute_action')?.shortcut || t('apps.noKey');
+});
 $('#modeSel').onchange = e => setSetting('mode', e.target.value);
 $('#themeSel').onchange = e => setSetting('theme', e.target.value);
 $('#lockSel').onchange = e => setSetting('lock', +e.target.value);

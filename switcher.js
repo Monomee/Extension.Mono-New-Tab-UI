@@ -36,8 +36,9 @@ function tint(el, img) {
   }, { once: true });
 }
 
-export function initSwitcher({ tabs, refresh, switchTo, leave, favicon }) {
-  const dlg = document.querySelector('#switcher'), $cards = document.querySelector('#cards');
+// inline: the cards sit directly in the page (popup) instead of a full-screen dialog.
+export function initSwitcher({ tabs, refresh, switchTo, leave, favicon, inline = false }) {
+  const dlg = inline ? null : document.querySelector('#switcher'), $cards = document.querySelector('#cards');
   const $closed = document.querySelector('#closedList');
 
   function card(tb, group) {
@@ -72,7 +73,7 @@ export function initSwitcher({ tabs, refresh, switchTo, leave, favicon }) {
     b.title = tab?.url || '';
     b.onclick = async () => {
       await chrome.sessions.restore((tab || entry.window).sessionId);
-      dlg.close();
+      dlg?.close();
       leave();
     };
     return b;
@@ -96,7 +97,7 @@ export function initSwitcher({ tabs, refresh, switchTo, leave, favicon }) {
   async function open() {
     await refresh();
     await render();
-    if (!dlg.open) dlg.showModal();
+    if (dlg && !dlg.open) dlg.showModal();
     $cards.querySelector('.card')?.focus();
   }
 
@@ -104,7 +105,7 @@ export function initSwitcher({ tabs, refresh, switchTo, leave, favicon }) {
     el.classList.add('gone');
     chrome.tabs.remove(+el.dataset.id).catch(() => {});
   };
-  const pick = el => { dlg.close(); switchTo(tabs().find(tb => tb.id === +el.dataset.id)); };
+  const pick = el => { dlg?.close(); switchTo(tabs().find(tb => tb.id === +el.dataset.id)); };
 
   // Swipe a card up to close its tab; a short press is a click.
   let drag = null;
@@ -132,7 +133,7 @@ export function initSwitcher({ tabs, refresh, switchTo, leave, favicon }) {
   $cards.addEventListener('pointercancel', () => { if (drag) drag.el.style.transform = drag.el.style.opacity = ''; drag = null; });
   $cards.addEventListener('click', e => { const x = e.target.closest('.card-x'); if (x) closeTab(x.closest('.card')); });
 
-  dlg.addEventListener('keydown', e => {
+  (dlg || document).addEventListener('keydown', e => {
     const el = e.target.closest?.('.card');
     if (!el) return;
     if (e.key === 'Enter') pick(el);
@@ -142,6 +143,7 @@ export function initSwitcher({ tabs, refresh, switchTo, leave, favicon }) {
       e.preventDefault();
     }
   });
+  if (inline) return { open, update: render };
   dlg.addEventListener('click', e => { if (e.target === dlg || e.target.matches('.sw-wrap')) dlg.close(); }); // backdrop
   document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 'ArrowUp' && !document.querySelector('dialog[open]')) { e.preventDefault(); open(); }

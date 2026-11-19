@@ -27,6 +27,7 @@ Dùng cá nhân, ưu tiên **đẹp, mở tab là hiện ngay, tự chỉnh dễ
 - **v1.10 App Switcher** (`switcher.js`, quyền `tabGroups`, `sessions`): nút ▭ hoặc Ctrl+↑ → thẻ tab (mới dùng trước), màu thẻ = màu trung bình favicon, nhãn nhóm tab có màu. Bấm = chuyển, vuốt lên / × / Delete = đóng tab. Dưới: "Mới đóng gần đây" (tab/cửa sổ) bấm để khôi phục. Không có ảnh chụp trang: cần `<all_urls>`, cảnh báo cài đặt quá nặng.
 - **v1.11 Kiểu thiết bị** (`device.js`, `settings.mode` = `ios` | `mac`): iPad → thanh trạng thái (giờ, Wi-Fi theo `navigator.onLine`, pin theo Battery API, ẩn nếu không có). Mac → thanh menu (Mono = cài đặt, Sửa, Tab, Ứng dụng; bên phải tìm kiếm, Wi-Fi, pin, ngày giờ), nút nổi chỉ còn khi chỉnh sửa, dock phóng to theo chuột bằng CSS `:has()` + nhãn nổi. Cả hai: nút ▦ đầu dock mở "Tất cả ứng dụng" (mọi lối tắt A→Z, lọc không dấu, Enter mở cái đầu).
 - **v1.12 Trung tâm điều khiển + màn hình khóa**: nút ở thanh trạng thái/menu → bảng nhanh: Sáng/Tối/Tự động (`settings.theme`; CSS dùng `color-scheme` + `light-dark()`, `<html data-theme>` ép chế độ), Tập trung (`settings.focus`: ẩn widget và badge), Chuyển tab, Kiểu Mac, Độ sáng nền (= `0.8 - dim`), Khóa ngay. Khóa tự động (`settings.lock` phút: 0/1/5/15/30, mặc định 5) khi tab hiện mà không có thao tác, không khóa khi đang sửa / mở hộp thoại / bảng. Bấm hoặc phím bất kỳ để mở (phím đó không lọt vào trang).
+- **v1.14 Dùng từ tab bất kỳ**: (1) **Popup** (`popup.html/js`, nút trên thanh công cụ hoặc `Ctrl+Shift+Space`, đổi ở chrome://extensions/shortcuts): Spotlight + thẻ tab đang mở (trừ trang đang xem) + mới đóng; mở link → tab mới cạnh tab hiện tại. (3) **Omnibox** `m` + dấu cách (`background.js`): gợi ý tab đang mở + lối tắt, Enter: địa chỉ → mở, không thì kết quả tốt nhất, không có → tìm web; tôn trọng Alt+Enter (tab mới). (4) **Side panel** (`panel.html/js`, quyền `sidePanel`, `settings.sidePanel` mặc định tắt): dock dọc gồm mọi lối tắt (chấm = đang mở), danh sách tab (bấm chuyển, × đóng), tìm kiếm; cập nhật trực tiếp. Bật trong ⚙ thì mở ngay; `background.js` bật/tắt panel theo setting. Spotlight/Switcher nhận `openUrl` / `inline` để dùng lại ở các trang này. Chưa làm: lớp phủ giữa trang (`activeTab` + `scripting`).
 
 ## Chưa làm
 Pomodoro, đồng bộ giữa các máy, đổi kích thước widget bằng chuột.
@@ -118,6 +119,7 @@ tabs.js            khớp tab ↔ lối tắt (app đang chạy)
 spotlight.js       tìm tab/lối tắt/dấu trang/lịch sử
 switcher.js        App Switcher + mới đóng gần đây
 device.js          thanh trạng thái/menu, pin/Wi-Fi, màn hình khóa
+popup.html/js      popup từ tab bất kỳ · panel.html/js  side panel · background.js  omnibox + bật/tắt panel
 test/validate.test.js kiểm tra hàm validate khi nhập JSON (node, assert)
 ```
 

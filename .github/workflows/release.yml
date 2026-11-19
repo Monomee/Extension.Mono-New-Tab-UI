@@ -22,7 +22,7 @@ jobs:
           [ "v$v" = "$GITHUB_REF_NAME" ] || { echo "manifest $v != tag $GITHUB_REF_NAME"; exit 1; }
 
       - name: Package extension
-        run: zip -r "mono-new-tab-$GITHUB_REF_NAME.zip" manifest.json newtab.html *.js style.css icons lib _locales
+        run: zip -r "mono-new-tab-$GITHUB_REF_NAME.zip" manifest.json *.html *.js style.css icons lib _locales
 
       - name: Create GitHub release
         env:

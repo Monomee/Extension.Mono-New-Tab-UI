@@ -1,4 +1,5 @@
 {
-  "name": { "message": "Mono New Tab" },
-  "description": { "message": "An iPad-style home screen for your new tab: widget grid, quick-access dock, custom wallpaper." }
+  "name": {"message": "Mono New Tab"},
+  "description": {"message": "An iPad-style home screen for your new tab: widget grid, quick-access dock, custom wallpaper."},
+  "actionTitle": {"message": "Mono: open tabs & search"}
 }

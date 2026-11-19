@@ -32,10 +32,20 @@ export function rank(cands, query, n = 8) {
 // Typed something address-like ("vnexpress.net", "http://…") → offer to open it directly.
 export const typedUrl = q => (/^https?:\/\//i.test(q) || /^[^\s/]+\.[a-z]{2,}(\/\S*)?$/i.test(q) ? normalizeUrl(q) : null);
 
+// What Enter does with typed text: an address opens, else the best match, else a web search.
+export const bestAction = (text, ranked) => {
+  const url = typedUrl(text.trim());
+  return url ? { kind: 'go', url } : ranked[0] || { kind: 'web', title: text.trim() };
+};
+
+// Omnibox suggestion text (XML: Chrome renders <dim>/<url> tags, so user text must be escaped).
+const xml = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+export const omniText = (r, label) => `${xml(r.title || bare(r.url))} <dim>· ${xml(label)}</dim> <url>${xml(bare(r.url).slice(0, 80))}</url>`;
+
 export const MORE = { permissions: ['bookmarks', 'history'] };
 const web = u => /^https?:\/\//i.test(u || '');
 
-export function initSpotlight({ links, tabs, switchTo, favicon, engineName }) {
+export function initSpotlight({ links, tabs, switchTo, favicon, engineName, openUrl = u => { location.href = u; } }) {
   const form = document.querySelector('#search'), input = form.q, list = document.querySelector('#results');
   let rows = [], sel = 0, seq = 0;
 
@@ -85,7 +95,7 @@ export function initSpotlight({ links, tabs, switchTo, favicon, engineName }) {
   function activate(r) {
     if (!r) return;
     if (r.kind === 'tab') return close(), switchTo(r.tab);
-    location.href = r.kind === 'web' ? `${form.action}?q=${encodeURIComponent(r.title)}` : r.url;
+    openUrl(r.kind === 'web' ? `${form.action}?q=${encodeURIComponent(r.title)}` : r.url);
   }
 
   const open = () => { document.body.classList.add('spot'); input.focus(); input.select(); update(); };

@@ -1,5 +1,13 @@
 // Open browser tabs as "running apps". Pure helpers; callers pass chrome.tabs.query() results.
 
+export const faviconUrl = u => `${chrome.runtime.getURL('/_favicon/')}?pageUrl=${encodeURIComponent(u)}&size=64`;
+// Every shortcut in the saved state (pages, folders, dock), each URL once.
+export function allLinks(state) {
+  const seen = new Set();
+  return [...state.dock, ...state.pages.flat()].flatMap(i => i.items || [i])
+    .filter(i => i.type === 'link' && !seen.has(i.url) && seen.add(i.url));
+}
+
 // host (no www.) + path (no trailing slash): "github.com/foo"
 const keyOf = url => {
   try {

@@ -561,6 +561,53 @@ body.editing .lp-grid .item { animation: none; }
 .closed img { width: 16px; height: 16px; flex: none; }
 .closed span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* ---------- popup (any tab) & side panel: plain page, no wallpaper ---------- */
+html:has(body.popup), html:has(body.panel) { height: auto; }
+body.popup, body.panel {
+  height: auto; overflow: hidden auto; background: light-dark(#f2f2f7, #1c1c1e); color: var(--ink); user-select: none;
+}
+body.popup { width: 760px; height: 540px; padding: 14px; }
+.popup #search, .panel #search { width: 100%; height: 44px; background: var(--glass-strong); box-shadow: 0 2px 10px rgba(0, 0, 0, .08); }
+.popup #results, .panel #results { position: static; transform: none; width: 100%; max-height: none; margin-top: 8px; box-shadow: none; }
+.popup #results:not([hidden]) ~ .pop-tabs { display: none; }
+.pop-btn {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 9px;
+  background: none; color: var(--ink-soft); cursor: pointer;
+}
+.pop-btn:hover { background: rgba(127, 127, 127, .18); color: var(--ink); }
+.pop-btn svg { width: 19px; height: 19px; }
+.pop-tabs h3, .panel h3 { margin: 16px 4px 8px; }
+.popup .cards { justify-content: flex-start; gap: 16px; padding: 8px 4px 14px; }
+.popup .card { width: 168px; height: 226px; border-radius: 20px; box-shadow: 0 6px 18px rgba(0, 0, 0, .14); }
+.popup .card-body img { width: 60px; height: 60px; padding: 12px; border-radius: 18px; }
+.popup .sw-closed { width: auto; margin: 0; }
+.popup .sw-closed h3 { color: var(--ink-soft); text-align: left; }
+.popup #closedList { justify-content: flex-start; }
+.popup .closed, .panel .closed { background: rgba(127, 127, 127, .16); color: var(--ink); }
+.popup .closed:hover, .panel .closed:hover { background: rgba(127, 127, 127, .28); }
+.popup .sw-empty { color: var(--ink-soft); font-size: 14px; padding: 12px 4px; }
+
+body.panel { min-height: 100vh; padding: 12px; }
+.panel #results:not([hidden]) ~ .pnl { display: none; }
+.p-apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 12px 4px; }
+.p-app {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 4px 0;
+  border: 0; border-radius: 12px; background: none; color: var(--ink); cursor: pointer;
+}
+.p-app:hover { background: rgba(127, 127, 127, .14); }
+.p-app .icon { --icon: 46px; border-radius: 13px; box-shadow: 0 2px 8px rgba(0, 0, 0, .15); }
+.p-app .label { max-width: 66px; font-size: 11.5px; text-shadow: none; }
+.p-tabs { list-style: none; margin: 0; padding: 0; }
+.p-tabs li {
+  display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 10px; cursor: pointer; font-size: 13px;
+}
+.p-tabs li:hover { background: rgba(127, 127, 127, .14); }
+.p-tabs li.on { background: rgba(10, 132, 255, .16); }
+.p-tabs img { width: 16px; height: 16px; flex: none; }
+.p-tabs span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-tabs .card-x { opacity: 0; }
+.p-tabs li:hover .card-x { opacity: 1; }
+
 /* ---------- dialogs & settings ---------- */
 dialog.sheet {
   border-radius: 22px; padding: 22px; width: min(380px, calc(100% - 32px));

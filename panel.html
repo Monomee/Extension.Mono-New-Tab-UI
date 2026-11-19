@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mono</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<!-- Side panel: a vertical dock next to any page — shortcuts with running dots, open tabs, search. -->
+<body class="panel">
+<form id="search" class="glass" role="search">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  <input name="q" placeholder="Tìm tab, lối tắt, trang web…" autocomplete="off" aria-label="Tìm kiếm" data-i18n-ph="pop.ph" data-i18n-aria="search.aria"
+    role="combobox" aria-controls="results" aria-autocomplete="list">
+</form>
+<ul id="results" class="glass" role="listbox" hidden></ul>
+<main class="pnl">
+  <h3 data-i18n="apps.title">Tất cả ứng dụng</h3>
+  <div id="pApps" class="p-apps"></div>
+  <h3><span data-i18n="sw.aria">Tab đang mở</span> · <span id="pCount"></span></h3>
+  <ul id="pTabs" class="p-tabs"></ul>
+</main>
+<script type="module" src="panel.js"></script>
+</body>
+</html>

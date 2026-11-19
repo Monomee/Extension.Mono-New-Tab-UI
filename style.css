@@ -395,6 +395,63 @@ body.editing .page:empty { outline: 2px dashed rgba(255, 255, 255, .3); outline-
 .slot.bad { background: rgba(255, 69, 58, .18); outline-color: rgba(255, 69, 58, .6); }
 .sortable-chosen { animation: none !important; }
 
+/* ---------- app switcher ---------- */
+.switcher {
+  width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0;
+  border: 0; background: transparent; color: #fff;
+}
+.switcher[open] { animation: none; }
+.switcher::backdrop { background: rgba(0, 0, 0, .35); -webkit-backdrop-filter: blur(26px) saturate(140%); backdrop-filter: blur(26px) saturate(140%); }
+.sw-wrap { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
+.cards {
+  display: flex; justify-content: safe center; gap: 28px; overflow-x: auto; padding: 40px 40px 24px;
+  scroll-snap-type: x proximity; scrollbar-width: none;
+}
+.card {
+  --c: 120 120 128;
+  flex: none; width: 220px; height: 300px; scroll-snap-align: center;
+  display: flex; flex-direction: column; border-radius: 26px; overflow: hidden; cursor: pointer; outline: 0;
+  background: var(--glass-strong); color: var(--ink); box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
+  transition: transform .2s, opacity .2s; touch-action: none;
+  animation: card-in .28s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+.card:nth-child(2) { animation-delay: .03s; }
+.card:nth-child(3) { animation-delay: .06s; }
+.card:nth-child(n+4) { animation-delay: .09s; }
+@keyframes card-in { from { transform: translateY(40px) scale(.92); opacity: 0; } }
+.card:hover, .card:focus-visible { transform: translateY(-6px); }
+.card:focus-visible { box-shadow: 0 0 0 3px var(--accent), 0 18px 50px rgba(0, 0, 0, .35); }
+.card.gone { transform: translateY(-120%) !important; opacity: 0; pointer-events: none; }
+.card-head { display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 14px; font-size: 13px; font-weight: 600; }
+.card-head img { width: 18px; height: 18px; flex: none; }
+.card-head span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-x {
+  flex: none; width: 24px; height: 24px; border: 0; border-radius: 50%; padding: 0; cursor: pointer;
+  background: rgba(127, 127, 127, .2); color: var(--ink); font-size: 16px; line-height: 24px;
+}
+.card-x:hover { background: var(--danger); color: #fff; }
+.card-body {
+  flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: linear-gradient(160deg, rgb(var(--c) / .95), rgb(var(--c) / .55)); color: #fff;
+}
+.card-body img {
+  width: 72px; height: 72px; padding: 14px; border-radius: 22px; background: rgba(255, 255, 255, .92);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25); pointer-events: none;
+}
+.card-host { max-width: 90%; font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0, 0, 0, .4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-group { position: absolute; top: 10px; left: 10px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #fff; }
+.sw-empty { font-size: 17px; opacity: .85; }
+.sw-closed { width: min(900px, calc(100% - 48px)); margin: 0 auto; }
+.sw-closed h3 { color: rgba(255, 255, 255, .75); text-align: center; }
+#closedList { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.closed {
+  display: flex; align-items: center; gap: 8px; max-width: 240px; padding: 7px 12px; border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, .16); color: #fff; font-size: 13px;
+}
+.closed:hover { background: rgba(255, 255, 255, .28); }
+.closed img { width: 16px; height: 16px; flex: none; }
+.closed span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---------- dialogs & settings ---------- */
 dialog.sheet {
   border-radius: 22px; padding: 22px; width: min(380px, calc(100% - 32px));

@@ -177,4 +177,10 @@ assert.equal(typedUrl('http://a.b/c'), 'http://a.b/c');
 assert.equal(typedUrl('hello world'), null);
 assert.equal(typedUrl('javascript:alert(1)'), null);
 
+// switcher card tint: average of the coloured pixels, ignores transparency/white/black
+const { avgColor } = await import('../switcher.js');
+assert.deepEqual(avgColor(px(4, x => (x < 2 ? [200, 0, 0, 255] : [255, 255, 255, 255]))), [200, 0, 0]);
+assert.deepEqual(avgColor(px(4, x => (x < 2 ? [0, 0, 200, 255] : [0, 255, 0, 0]))), [0, 0, 200]);
+assert.equal(avgColor(px(4, () => [255, 255, 255, 255])), null);
+
 console.log('ok');

@@ -25,7 +25,10 @@
     <button id="addBtn" class="tool glass edit-only" title="Thêm" aria-label="Thêm" data-i18n-title="add" data-i18n-aria="add">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
     </button>
-    <button id="editBtn" class="tool glass" title="Chỉnh sửa màn hình" aria-label="Chỉnh sửa" data-i18n-title="edit.title" data-i18n-aria="edit.aria">
+    <button id="switchBtn" class="tool glass" title="Tab đang mở (Ctrl+↑)" aria-label="Tab đang mở" data-i18n-title="sw.title" data-i18n-aria="sw.aria">
+      <svg viewBox="0 0 24 24"><rect x="3" y="6" width="9" height="13" rx="2"/><path d="M15 6h4a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-4"/></svg>
+    </button>
+    <button id="editBtn"class="tool glass" title="Chỉnh sửa màn hình" aria-label="Chỉnh sửa" data-i18n-title="edit.title" data-i18n-aria="edit.aria">
       <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
     </button>
     <button id="doneBtn" class="tool glass done edit-only" data-i18n="done">Xong</button>
@@ -101,7 +104,17 @@
   </div>
 </dialog>
 
-<aside id="settings" class="glass" aria-label="Cài đặt" data-i18n-aria="settings" inert>
+<dialog id="switcher" class="switcher">
+  <div class="sw-wrap">
+    <div id="cards" class="cards"></div>
+    <section class="sw-closed" hidden>
+      <h3 data-i18n="sw.closed">Mới đóng gần đây</h3>
+      <div id="closedList"></div>
+    </section>
+  </div>
+</dialog>
+
+<aside id="settings"class="glass" aria-label="Cài đặt" data-i18n-aria="settings" inert>
   <div class="set-head"><h2 data-i18n="settings">Cài đặt</h2><button class="btn" id="setClose" data-i18n="close">Đóng</button></div>
 
   <section>

@@ -4,6 +4,7 @@ import { renderWidget, tick } from './widgets.js';
 import { t, setLang, translateDom } from './i18n.js';
 import { tabsFor, pickTab } from './tabs.js';
 import { initSpotlight, MORE } from './spotlight.js';
+import { initSwitcher } from './switcher.js';
 
 const $ = s => document.querySelector(s);
 const h = (tag, cls, text) => {
@@ -861,6 +862,7 @@ const selfTab = await chrome.tabs.getCurrent().catch(() => null);
 async function refreshTabs() {
   openTabs = (await chrome.tabs.query({}).catch(() => [])).filter(tb => tb.id !== selfTab?.id);
   markRunning();
+  switcher.update();
 }
 // Dot = the link (or something in the folder) is open in a tab; badge = how many tabs when > 1.
 function markRunning() {
@@ -885,12 +887,19 @@ chrome.tabs.onUpdated.addListener((id, info) => { if (info.url) tabsChanged(); }
 // Bring the tab forward like clicking a running app; this blank new tab closes itself
 // unless it's the last tab in its window or has history to go back to.
 async function switchTo(tab) {
+  if (!tab) return;
   await chrome.tabs.update(tab.id, { active: true });
   await chrome.windows.update(tab.windowId, { focused: true });
+  leave();
+}
+async function leave() {
   if (!selfTab || history.length > 1) return;
   const siblings = await chrome.tabs.query({ windowId: selfTab.windowId });
   if (siblings.length > 1) chrome.tabs.remove(selfTab.id);
 }
+const switcher =initSwitcher({ tabs: () => openTabs, refresh: refreshTabs, switchTo, leave, favicon: faviconUrl });
+chrome.sessions?.onChanged.addListener(() => switcher.update());
+chrome.tabs.onActivated.addListener(tabsChanged); // recency order in the switcher
 
 /* ---------- spotlight ---------- */
 initSpotlight({

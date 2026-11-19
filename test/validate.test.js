@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { normalizeUrl, defaultState, validateState, needsDarkTile, placeItems, overlaps } from '../state.js';
 import { describeWeather } from '../weather.js';
 import { STRINGS, t, setLang } from '../i18n.js';
+import { tabMatches, pickTab } from '../tabs.js';
 
 assert.equal(normalizeUrl('youtube.com'), 'https://youtube.com/');
 assert.equal(normalizeUrl('  http://a.vn/x '), 'http://a.vn/x');
@@ -140,5 +141,20 @@ const msgs = l => JSON.parse(readFileSync(new URL(`../_locales/${l}/messages.jso
 for (const l of ['en', 'vi']) for (const k of ['name', 'description']) assert.ok(msgs(l)[k]?.message, `${l}.${k}`);
 assert.equal(manifest.name, '__MSG_name__');
 assert.ok(msgs(manifest.default_locale));
+
+// running apps: same site + under the link's path; most recently used wins
+assert.ok(tabMatches('https://www.google.com/search?q=x', 'https://google.com/'));
+assert.ok(tabMatches('https://github.com/foo/bar', 'https://github.com/foo'));
+assert.ok(tabMatches('https://github.com/foo/', 'https://github.com/foo'));
+assert.ok(!tabMatches('https://github.com/foobar', 'https://github.com/foo'));
+assert.ok(!tabMatches('https://mail.google.com/', 'https://www.google.com/'));
+assert.ok(!tabMatches('chrome://newtab/', 'https://google.com/'));
+const tabs = [{ id: 1, url: 'https://a.vn/x', lastAccessed: 5 }, { id: 2, url: 'https://a.vn/', lastAccessed: 9 }, { id: 3, url: 'https://b.vn/' }];
+assert.equal(pickTab(tabs, 'https://a.vn').id, 2);
+assert.equal(pickTab(tabs, 'https://a.vn/x').id, 1);
+assert.equal(pickTab(tabs, 'https://c.vn/'), null);
+assert.equal(validateState({ ...d, settings: { ...d.settings, switchTab: false } }).settings.switchTab, false);
+const old = structuredClone(d); delete old.settings.switchTab;
+assert.equal(validateState(old).settings.switchTab, true); // older installs: on
 
 console.log('ok');

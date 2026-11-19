@@ -36,7 +36,7 @@ export function defaultState() {
     ],
     notes: {},
     todos: {},
-    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null, lang: browserLang() },
+    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null, lang: browserLang(), switchTab: true },
   };
 }
 
@@ -141,6 +141,7 @@ export function validateState(obj) {
     blur: num(s.blur, 0, 30, 0),
     city: cleanCity(s.city),
     lang: LANGS.includes(s.lang) ? s.lang : 'vi', // missing → vi: existing installs predate the setting
+    switchTab: s.switchTab !== false,
   };
   return { version: 1, pages, dock, notes, todos, settings };
 }

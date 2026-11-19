@@ -2,6 +2,7 @@
 import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES, sizeOf, overlaps, placeItems } from './state.js';
 import { renderWidget, tick } from './widgets.js';
 import { t, setLang, translateDom } from './i18n.js';
+import { tabsFor, pickTab } from './tabs.js';
 
 const $ = s => document.querySelector(s);
 const h = (tag, cls, text) => {
@@ -375,6 +376,7 @@ function render() {
   sortables = [...$pages.children, $dockList].map(box => Sortable.create(box, sortOpts(box === $dockList ? 'dock' : 'page')));
   $pages.scrollLeft = left;
   renderDots();
+  markRunning();
   tick();
 }
 
@@ -527,7 +529,13 @@ document.addEventListener('click', e => {
   if (del) { e.preventDefault(); removeItem(del.parentElement.dataset.id); return; }
   const folder = e.target.closest('.item.folder');
   if (folder) { openFolder(folder.dataset.id); return; }
-  if (!editing) return;
+  if (!editing) {
+    const ln = e.target.closest('.item.link');
+    const plain = e.button === 0 && !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
+    const tab = ln && plain && state.settings.switchTab && pickTab(openTabs, findItem(ln.dataset.id)?.url);
+    if (tab) { e.preventDefault(); switchTo(tab); }
+    return;
+  }
   const link = e.target.closest('.item.link');
   if (link) { e.preventDefault(); openLinkDlg(findItem(link.dataset.id)); return; }
   if (e.target.matches('.page, #pages')) setEditing(false); // tap empty space = done
@@ -567,6 +575,7 @@ function renderFolder() {
   $('#folderTitle').value = f.title;
   folderSortable?.destroy();
   $folderGrid.replaceChildren(...f.items.map(itemEl));
+  markRunning();
   folderSortable = Sortable.create($folderGrid, {
     animation: 200,
     disabled: !editing,
@@ -771,12 +780,14 @@ function syncSettingsUI() {
   $('#searchOn').checked = s.search;
   $('#engineSel').value = s.engine;
   $('#langSel').value = s.lang;
+  $('#switchTab').checked = s.switchTab;
 }
 const setSetting = (k, v) => { state.settings[k] = v; applySettings(); save(); };
 $('#dimRange').oninput = e => setSetting('dim', +e.target.value);
 $('#blurRange').oninput = e => setSetting('blur', +e.target.value);
 $('#searchOn').onchange = e => setSetting('search', e.target.checked);
 $('#engineSel').onchange = e => setSetting('engine', e.target.value);
+$('#switchTab').onchange = e => setSetting('switchTab', e.target.checked);
 $('#langSel').onchange = e => {
   setSetting('lang', e.target.value); // applySettings → setLang + translateDom
   render(); // widgets & dots build their text in JS
@@ -843,6 +854,43 @@ $('#importFile').onchange = async e => {
   msg(t('msg.imported'));
 };
 
+/* ---------- running apps (open browser tabs) ---------- */
+let openTabs = [];
+const selfTab = await chrome.tabs.getCurrent().catch(() => null);
+async function refreshTabs() {
+  openTabs = (await chrome.tabs.query({}).catch(() => [])).filter(tb => tb.id !== selfTab?.id);
+  markRunning();
+}
+// Dot = the link (or something in the folder) is open in a tab; badge = how many tabs when > 1.
+function markRunning() {
+  for (const el of document.querySelectorAll('.item.link, .item.folder')) {
+    const it = findItem(el.dataset.id);
+    if (!it) continue;
+    const links = it.items || [it];
+    const n = openTabs.filter(tb => links.some(l => tabsFor([tb], l.url).length)).length;
+    el.classList.toggle('running', n > 0);
+    let b = el.querySelector(':scope > .badge');
+    if (n > 1 && !b) el.append(b = h('span', 'badge'));
+    if (b) n > 1 ? (b.textContent = n) : b.remove();
+  }
+}
+let tabsT;
+const tabsChanged = () => { clearTimeout(tabsT); tabsT = setTimeout(refreshTabs, 150); };
+chrome.tabs.onCreated.addListener(tabsChanged);
+chrome.tabs.onRemoved.addListener(tabsChanged);
+chrome.tabs.onReplaced.addListener(tabsChanged);
+chrome.tabs.onUpdated.addListener((id, info) => { if (info.url) tabsChanged(); });
+
+// Bring the tab forward like clicking a running app; this blank new tab closes itself
+// unless it's the last tab in its window or has history to go back to.
+async function switchTo(tab) {
+  await chrome.tabs.update(tab.id, { active: true });
+  await chrome.windows.update(tab.windowId, { focused: true });
+  if (!selfTab || history.length > 1) return;
+  const siblings = await chrome.tabs.query({ windowId: selfTab.windowId });
+  if (siblings.length > 1) chrome.tabs.remove(selfTab.id);
+}
+
 /* ---------- other tabs ---------- */
 // Each tab holds its own copy; reload when this tab becomes visible so it never saves stale data.
 document.addEventListener('visibilitychange', async () => {
@@ -861,6 +909,7 @@ await loadIcons();
 applySettings();
 syncSettingsUI();
 render();
+refreshTabs();
 setInterval(tick, 1000);
 let resizeT;
 addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (!dragging) render(); }, 200); });

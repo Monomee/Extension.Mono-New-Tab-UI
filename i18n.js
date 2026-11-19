@@ -28,6 +28,8 @@ export const STRINGS = {
     'wall.url.ph': 'Hoặc dán link ảnh (https://…)', 'wall.use': 'Dùng', 'wall.dim': 'Làm tối nền', 'wall.blur': 'Làm mờ nền',
     'set.search': 'Tìm kiếm', 'search.show': 'Hiện thanh tìm kiếm', 'search.engine': 'Công cụ',
     'set.lang': 'Ngôn ngữ',
+    'set.apps': 'Tab & ứng dụng', 'apps.switch': 'Bấm icon thì chuyển sang tab đang mở',
+    'apps.switch.hint': 'Tắt thì bấm icon luôn mở trang như bình thường.',
     'set.backup': 'Sao lưu', 'backup.export': 'Xuất file JSON', 'backup.import': 'Nhập file JSON',
     'backup.hint': 'Ảnh nền và icon tải từ máy không nằm trong file sao lưu.',
 
@@ -78,6 +80,8 @@ export const STRINGS = {
     'wall.url.ph': 'Or paste an image link (https://…)', 'wall.use': 'Use', 'wall.dim': 'Darken', 'wall.blur': 'Blur',
     'set.search': 'Search', 'search.show': 'Show search bar', 'search.engine': 'Engine',
     'set.lang': 'Language',
+    'set.apps': 'Tabs & apps', 'apps.switch': 'Clicking an icon switches to its open tab',
+    'apps.switch.hint': 'When off, icons always open the page as usual.',
     'set.backup': 'Backup', 'backup.export': 'Export JSON', 'backup.import': 'Import JSON',
     'backup.hint': "Uploaded wallpapers and icons aren't included in backups.",
 

@@ -302,6 +302,23 @@ body.editing .drop-target { animation: none; }
   background: rgba(127, 127, 127, .14); color: var(--ink); font-size: 13px;
 }
 
+/* running apps: dot = open in a tab (under the icon in the dock, before the label on pages) */
+#dock .running::after {
+  content: ""; position: absolute; left: 50%; bottom: -9px; width: 5px; height: 5px; margin-left: -2.5px;
+  border-radius: 50%; background: var(--ink);
+}
+.running .label::before {
+  content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 5px 1px 0; border-radius: 50%;
+  background: currentColor; vertical-align: middle;
+}
+.badge {
+  position: absolute; top: -6px; right: calc(50% - var(--icon) / 2 - 8px); z-index: 1;
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+  background: var(--danger); color: #fff; font-size: 12px; font-weight: 600; line-height: 20px; text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .3); pointer-events: none;
+}
+body.editing .badge { display: none; }
+
 /* ---------- dock ---------- */
 #dock {
   position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);

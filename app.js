@@ -3,6 +3,7 @@ import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, 
 import { renderWidget, tick } from './widgets.js';
 import { t, setLang, translateDom } from './i18n.js';
 import { tabsFor, pickTab } from './tabs.js';
+import { initSpotlight, MORE } from './spotlight.js';
 
 const $ = s => document.querySelector(s);
 const h = (tag, cls, text) => {
@@ -890,6 +891,23 @@ async function switchTo(tab) {
   const siblings = await chrome.tabs.query({ windowId: selfTab.windowId });
   if (siblings.length > 1) chrome.tabs.remove(selfTab.id);
 }
+
+/* ---------- spotlight ---------- */
+initSpotlight({
+  links: () => allItems().filter(i => i.type === 'link'),
+  tabs: () => openTabs,
+  switchTo,
+  favicon: faviconUrl,
+  engineName: () => $('#engineSel').selectedOptions[0]?.textContent || '',
+});
+// Bookmarks + history search lives in an optional permission: the checkbox mirrors it.
+const syncMore = async () => { $('#spotMore').checked = await chrome.permissions.contains(MORE).catch(() => false); };
+$('#spotMore').onchange = async e => {
+  // request() must run inside the click's user gesture: no await before it
+  await (e.target.checked ? chrome.permissions.request(MORE) : chrome.permissions.remove(MORE)).catch(() => false);
+  syncMore();
+};
+syncMore();
 
 /* ---------- other tabs ---------- */
 // Each tab holds its own copy; reload when this tab becomes visible so it never saves stale data.

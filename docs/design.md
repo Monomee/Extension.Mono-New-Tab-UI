@@ -23,6 +23,7 @@ Dùng cá nhân, ưu tiên **đẹp, mở tab là hiện ngay, tự chỉnh dễ
 - **v1.4 Ngôn ngữ vi/en**: `i18n.js` (từ điển + `t()`, `translateDom()` qua `data-i18n`, `-ph`, `-title`, `-aria`), `settings.lang`; cài mới theo ngôn ngữ trình duyệt, dữ liệu cũ thiếu `lang` → `vi`. Ngày/thứ dùng `Intl` theo ngôn ngữ. Test bắt buộc hai từ điển cùng key và mọi key trong HTML tồn tại. Tên thư mục đã đặt là dữ liệu người dùng, không dịch.
 
 - **v1.8 Tab = app đang chạy** (`tabs.js`, quyền `tabs`): lối tắt có tab đang mở cùng trang (cùng host, dưới path của link) → chấm dưới icon (dock) / trước tên (trang), badge đỏ = số tab khi ≥ 2; thư mục tính gộp. `settings.switchTab` (mặc định bật): bấm icon → kích hoạt tab dùng gần nhất, new tab trống tự đóng (trừ khi là tab cuối của cửa sổ hoặc có lịch sử). Ctrl/giữa chuột vẫn mở tab mới.
+- **v1.9 Spotlight** (`spotlight.js`): thanh tìm kiếm gợi ý tab đang mở, lối tắt, (tuỳ chọn) dấu trang + lịch sử, gõ địa chỉ → "Mở trang", dòng cuối tìm web. Không phân biệt dấu ("ghi chu" ra "Ghi chú"). Ctrl/⌘+K hoặc `/` mở kể cả khi đã ẩn thanh tìm kiếm (làm tối nền). Dấu trang/lịch sử là `optional_permissions`, checkbox trong ⚙ chính là trạng thái quyền (không lưu setting riêng).
 
 ## Chưa làm
 Pomodoro, đồng bộ giữa các máy, đổi kích thước widget bằng chuột.

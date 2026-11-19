@@ -4,6 +4,7 @@ import { normalizeUrl, defaultState, validateState, needsDarkTile, placeItems, o
 import { describeWeather } from '../weather.js';
 import { STRINGS, t, setLang } from '../i18n.js';
 import { tabMatches, pickTab } from '../tabs.js';
+import { score, rank, typedUrl } from '../spotlight.js';
 
 assert.equal(normalizeUrl('youtube.com'), 'https://youtube.com/');
 assert.equal(normalizeUrl('  http://a.vn/x '), 'http://a.vn/x');
@@ -156,5 +157,24 @@ assert.equal(pickTab(tabs, 'https://c.vn/'), null);
 assert.equal(validateState({ ...d, settings: { ...d.settings, switchTab: false } }).settings.switchTab, false);
 const old = structuredClone(d); delete old.settings.switchTab;
 assert.equal(validateState(old).settings.switchTab, true); // older installs: on
+
+// spotlight: diacritic-insensitive, prefix > word > substring, tabs before shortcuts on ties, one row per URL
+assert.equal(score('Ghi chú học tập', 'chu'), 2);
+assert.equal(score('YouTube', 'you'), 3);
+assert.equal(score('Đường đua', 'duong'), 3);
+assert.equal(score('playlist', 'list'), 1);
+assert.equal(score('abc', 'x'), 0);
+const sr = rank([
+  { kind: 'history', title: 'Mail', url: 'https://mail.google.com/' },
+  { kind: 'link', title: 'Gmail', url: 'https://mail.google.com/' },
+  { kind: 'tab', title: 'Inbox - Gmail', url: 'https://mail.google.com/mail/u/0' },
+  { kind: 'link', title: 'GitHub', url: 'https://github.com/' },
+], 'mail');
+assert.deepEqual(sr.map(r => r.kind + ':' + r.url), ['tab:https://mail.google.com/mail/u/0', 'link:https://mail.google.com/']);
+assert.deepEqual(rank([{ kind: 'link', title: 'x', url: 'https://x.vn/' }], '  '), []);
+assert.equal(typedUrl('vnexpress.net'), 'https://vnexpress.net/');
+assert.equal(typedUrl('http://a.b/c'), 'http://a.b/c');
+assert.equal(typedUrl('hello world'), null);
+assert.equal(typedUrl('javascript:alert(1)'), null);
 
 console.log('ok');

@@ -80,6 +80,33 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 #search input { flex: 1; border: 0; outline: 0; background: none; font-size: 16px; color: var(--ink); }
 #search input::placeholder { color: var(--ink-soft); }
 body.no-search #search { visibility: hidden; }
+#search kbd {
+  flex: none; font: 600 11px var(--font); color: var(--ink-soft); padding: 3px 7px; border-radius: 6px;
+  border: 1px solid var(--glass-line); background: rgba(127, 127, 127, .12);
+}
+#search:focus-within kbd { display: none; }
+
+/* spotlight: results under the bar; Ctrl+K dims the screen and shows the bar even if hidden */
+body.spot #search { visibility: visible; }
+body.spot .tools { visibility: hidden; }
+body.spot #top::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; background: rgba(0, 0, 0, .3);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+#results {
+  position: absolute; top: 84px; left: 50%; transform: translateX(-50%);
+  width: min(560px, 100% - 200px); max-height: min(440px, 70vh); overflow-y: auto;
+  margin: 0; padding: 6px; list-style: none; border-radius: 20px; background: var(--glass-strong);
+}
+.res { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; cursor: pointer; }
+.res img { width: 22px; height: 22px; flex: none; border-radius: 5px; }
+.res span { display: flex; flex-direction: column; min-width: 0; }
+.res b, .res small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.res b { font-size: 14px; font-weight: 500; }
+.res small { font-size: 12px; color: var(--ink-soft); }
+.res small:empty { display: none; }
+.res.sel { background: var(--accent); color: #fff; }
+.res.sel small { color: rgba(255, 255, 255, .8); }
 
 .tools { position: absolute; right: 24px; top: 34px; display: flex; gap: 10px; }
 .tool {
@@ -433,6 +460,7 @@ input[type="color"] { width: 40px; height: 36px; padding: 0; border: 0; backgrou
 }
 @media (max-width: 640px) {
   :root { --cell: 64px; --gap: 18px; --icon: 54px; }
-  #search { width: calc(100% - 140px); }
+  #search, #results { width: calc(100% - 140px); }
+  #search kbd { display: none; }
   .tools { right: 12px; }
 }

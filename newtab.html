@@ -16,8 +16,11 @@
 <header id="top">
   <form id="search" class="glass" role="search">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input name="q" placeholder="Tìm kiếm trên web" autocomplete="off" aria-label="Tìm kiếm" data-i18n-ph="search.ph" data-i18n-aria="search.aria">
+    <input name="q" placeholder="Tìm kiếm trên web" autocomplete="off" aria-label="Tìm kiếm" data-i18n-ph="search.ph" data-i18n-aria="search.aria"
+      role="combobox" aria-controls="results" aria-autocomplete="list">
+    <kbd>Ctrl K</kbd>
   </form>
+  <ul id="results" class="glass" role="listbox" hidden></ul>
   <div class="tools">
     <button id="addBtn" class="tool glass edit-only" title="Thêm" aria-label="Thêm" data-i18n-title="add" data-i18n-aria="add">
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
@@ -124,6 +127,8 @@
         <option value="google">Google</option><option value="bing">Bing</option><option value="duckduckgo">DuckDuckGo</option>
       </select>
     </label>
+    <label class="check"><input type="checkbox" id="spotMore"> <span data-i18n="spot.more">Tìm cả dấu trang và lịch sử</span></label>
+    <p class="hint" data-i18n="spot.hint">Ctrl+K hoặc / để tìm tab đang mở, lối tắt…</p>
   </section>
 
   <section>

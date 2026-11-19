@@ -1,13 +1,13 @@
 // Service worker: address-bar keyword ("m" + space) and the side panel on/off switch.
 import { loadState, ENGINES } from './state.js';
 import { t, setLang } from './i18n.js';
-import { allLinks } from './tabs.js';
+import { allLinks, SIDE_PANEL } from './tabs.js';
 import { rank, bestAction, omniText } from './spotlight.js';
 
 /* ---------- side panel: follows settings.sidePanel ---------- */
 const applyPanel = async () => {
   const { settings } = await loadState();
-  await chrome.sidePanel?.setOptions({ enabled: settings.sidePanel }).catch(() => {});
+  await chrome.sidePanel?.setOptions({ enabled: SIDE_PANEL && settings.sidePanel }).catch(() => {});
 };
 applyPanel();
 chrome.storage.onChanged.addListener(c => { if (c.state) applyPanel(); });

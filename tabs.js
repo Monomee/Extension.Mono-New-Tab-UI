@@ -1,5 +1,9 @@
 // Open browser tabs as "running apps". Pure helpers; callers pass chrome.tabs.query() results.
 
+// Side panel feature switch. Hidden for now: Chrome won't make the panel narrower than ~320px,
+// so icons-only isn't compact enough. true = setting, popup button and panel come back.
+export const SIDE_PANEL = false;
+
 export const faviconUrl = u => `${chrome.runtime.getURL('/_favicon/')}?pageUrl=${encodeURIComponent(u)}&size=64`;
 // Every shortcut in the saved state (pages, folders, dock), each URL once.
 export function allLinks(state) {

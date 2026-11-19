@@ -1,7 +1,7 @@
 // Popup (toolbar button or Ctrl+Shift+Space on any tab): spotlight + app switcher for the tab you're on.
 import { loadState, ENGINES } from './state.js';
 import { setLang, translateDom } from './i18n.js';
-import { faviconUrl, allLinks } from './tabs.js';
+import { faviconUrl, allLinks, SIDE_PANEL } from './tabs.js';
 import { initSpotlight } from './spotlight.js';
 import { initSwitcher } from './switcher.js';
 
@@ -47,7 +47,7 @@ $('#search').q.addEventListener('keydown', e => {
 });
 
 // Side panel dock, when turned on in settings.
-if (s.sidePanel && chrome.sidePanel) {
+if (SIDE_PANEL && s.sidePanel && chrome.sidePanel) {
   $('#panelBtn').hidden = false;
   $('#panelBtn').onclick = () => { chrome.sidePanel.open({ windowId: here.windowId }); close(); };
 }

@@ -2,7 +2,7 @@
 import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES, sizeOf, overlaps, placeItems } from './state.js';
 import { renderWidget, tick } from './widgets.js';
 import { t, setLang, translateDom, locale } from './i18n.js';
-import { tabsFor, pickTab, faviconUrl } from './tabs.js';
+import { tabsFor, pickTab, faviconUrl, SIDE_PANEL } from './tabs.js';
 import { initSpotlight, MORE, fold, score } from './spotlight.js';
 import { applyMode, initBar, initLock } from './device.js';
 import { initSwitcher } from './switcher.js';
@@ -788,6 +788,7 @@ function syncSettingsUI() {
   $('#switchTab').checked = s.switchTab;
   $('#afterSwitch').value = s.afterSwitch;
   $('#sidePanelOn').checked = s.sidePanel;
+  $('#sidePanelOn').closest('label').hidden = !SIDE_PANEL;
   $('#modeSel').value = s.mode;
   $('#themeSel').value = s.theme;
   $('#lockSel').value = s.lock;

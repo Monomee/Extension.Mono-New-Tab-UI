@@ -4,7 +4,7 @@ import { t } from './i18n.js';
 import { normalizeUrl } from './state.js';
 
 // Lowercase, no Vietnamese diacritics: "ghi chu" finds "Ghi chú".
-const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd');
+export const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/đ/g, 'd');
 
 // 3 = starts with, 2 = a word starts with, 1 = contains, 0 = no match. q must already be folded.
 export function score(text, q) {

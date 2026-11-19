@@ -1,5 +1,6 @@
 // Pure state helpers + chrome.storage persistence.
 import { t, browserLang, LANGS } from './i18n.js';
+import { MODES } from './device.js';
 export const WIDGET_SIZES = { clock: [[2, 2]], date: [[2, 2], [4, 4]], todo: [[2, 2], [2, 4], [4, 4]], note: [[4, 2], [2, 2], [4, 4]], weather: [[2, 2], [4, 2], [4, 4]] }; // first = default
 export const ENGINES = {
   google: 'https://www.google.com/search',
@@ -36,7 +37,7 @@ export function defaultState() {
     ],
     notes: {},
     todos: {},
-    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null, lang: browserLang(), switchTab: true },
+    settings: { search: true, engine: 'google', dim: 0.2, blur: 0, city: null, lang: browserLang(), switchTab: true, mode: 'ios' },
   };
 }
 
@@ -142,6 +143,7 @@ export function validateState(obj) {
     city: cleanCity(s.city),
     lang: LANGS.includes(s.lang) ? s.lang : 'vi', // missing → vi: existing installs predate the setting
     switchTab: s.switchTab !== false,
+    mode: MODES.includes(s.mode) ? s.mode : 'ios',
   };
   return { version: 1, pages, dock, notes, todos, settings };
 }

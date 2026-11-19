@@ -1,9 +1,10 @@
 /* global Sortable */
 import { loadState, saveState, validateState, normalizeUrl, needsDarkTile, uid, ENGINES, WIDGET_SIZES, sizeOf, overlaps, placeItems } from './state.js';
 import { renderWidget, tick } from './widgets.js';
-import { t, setLang, translateDom } from './i18n.js';
+import { t, setLang, translateDom, locale } from './i18n.js';
 import { tabsFor, pickTab } from './tabs.js';
-import { initSpotlight, MORE } from './spotlight.js';
+import { initSpotlight, MORE, fold, score } from './spotlight.js';
+import { applyMode, initBar } from './device.js';
 import { initSwitcher } from './switcher.js';
 
 const $ = s => document.querySelector(s);
@@ -121,6 +122,7 @@ function applySettings() {
   document.body.classList.toggle('no-search', !s.search);
   $('#search').action = ENGINES[s.engine];
   setLang(s.lang);
+  applyMode(s.mode);
   translateDom();
 }
 
@@ -783,6 +785,7 @@ function syncSettingsUI() {
   $('#engineSel').value = s.engine;
   $('#langSel').value = s.lang;
   $('#switchTab').checked = s.switchTab;
+  $('#modeSel').value = s.mode;
 }
 const setSetting = (k, v) => { state.settings[k] = v; applySettings(); save(); };
 $('#dimRange').oninput = e => setSetting('dim', +e.target.value);
@@ -790,6 +793,7 @@ $('#blurRange').oninput = e => setSetting('blur', +e.target.value);
 $('#searchOn').onchange = e => setSetting('search', e.target.checked);
 $('#engineSel').onchange = e => setSetting('engine', e.target.value);
 $('#switchTab').onchange = e => setSetting('switchTab', e.target.checked);
+$('#modeSel').onchange = e => setSetting('mode', e.target.value);
 $('#langSel').onchange = e => {
   setSetting('lang', e.target.value); // applySettings → setLang + translateDom
   render(); // widgets & dots build their text in JS
@@ -897,12 +901,38 @@ async function leave() {
   const siblings = await chrome.tabs.query({ windowId: selfTab.windowId });
   if (siblings.length > 1) chrome.tabs.remove(selfTab.id);
 }
-const switcher =initSwitcher({ tabs: () => openTabs, refresh: refreshTabs, switchTo, leave, favicon: faviconUrl });
+const switcher = initSwitcher({ tabs: () => openTabs, refresh: refreshTabs, switchTo, leave, favicon: faviconUrl });
 chrome.sessions?.onChanged.addListener(() => switcher.update());
 chrome.tabs.onActivated.addListener(tabsChanged); // recency order in the switcher
 
+/* ---------- all apps (launchpad) ---------- */
+// Every shortcut (pages, folders, dock) once, A→Z, filterable. Icons are normal items: same click rules.
+const $lp = $('#launchpad'), $lpGrid = $('#lpGrid'), $lpQ = $('#lpQ');
+function renderLaunchpad() {
+  const q = fold($lpQ.value.trim()), seen = new Set();
+  const links = allItems()
+    .filter(i => i.type === 'link' && !seen.has(i.url) && seen.add(i.url))
+    .filter(l => !q || score(l.title, q) || score(l.url.replace(/^https?:\/\/(www\.)?/, ''), q))
+    .sort((a, b) => a.title.localeCompare(b.title, locale()));
+  $lpGrid.replaceChildren(...(links.length ? links.map(itemEl) : [h('p', 'lp-none', t('apps.none'))]));
+  markRunning();
+}
+function openLaunchpad() {
+  $lpQ.value = '';
+  renderLaunchpad();
+  $lp.showModal();
+  $lpQ.focus();
+}
+$lpQ.oninput = renderLaunchpad;
+$lpQ.onkeydown = e => { if (e.key === 'Enter') $lpGrid.querySelector('.item.link a')?.click(); };
+$lp.addEventListener('click', e => {
+  if (e.target === $lp || e.target.matches('.lp-wrap, .lp-grid')) $lp.close(); // empty space
+  else if (!editing && e.target.closest('.item.link')) setTimeout(() => $lp.close()); // after the link's own click
+});
+$('#appsBtn').onclick = openLaunchpad;
+
 /* ---------- spotlight ---------- */
-initSpotlight({
+const spotlight = initSpotlight({
   links: () => allItems().filter(i => i.type === 'link'),
   tabs: () => openTabs,
   switchTo,
@@ -917,6 +947,15 @@ $('#spotMore').onchange = async e => {
   syncMore();
 };
 syncMore();
+
+/* ---------- status / menu bar ---------- */
+initBar({
+  mMono: () => openSettings(true),
+  mEdit: () => setEditing(true),
+  mTabs: () => switcher.open(),
+  mApps: openLaunchpad,
+  mSpot: () => spotlight.open(),
+});
 
 /* ---------- other tabs ---------- */
 // Each tab holds its own copy; reload when this tab becomes visible so it never saves stale data.

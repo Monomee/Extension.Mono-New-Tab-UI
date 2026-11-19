@@ -65,6 +65,40 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
   color: var(--ink);
 }
 
+/* ---------- status bar (iPad) / menu bar (Mac) ---------- */
+#bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 6; height: 28px; padding: 0 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13.5px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  pointer-events: none;
+}
+.bar-l, .bar-r { display: flex; align-items: center; gap: 12px; }
+#bar button, #bar svg { pointer-events: auto; }
+#bar button {
+  display: flex; align-items: center; gap: 6px; border: 0; padding: 2px 8px; border-radius: 6px;
+  background: none; color: inherit; font: inherit; cursor: pointer;
+}
+#bar button:hover { background: rgba(255, 255, 255, .2); }
+#bar svg { width: 17px; height: 17px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .3)); }
+#wifi.off { opacity: .35; }
+#bat { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+#bat svg { width: 26px; height: 13px; stroke-width: 1.5; }
+.bat-shell { opacity: .55; }
+.bat-fill { fill: currentColor; stroke: none; transform-box: fill-box; transform: scaleX(var(--lvl, 1)); }
+#bat.charging .bat-fill { fill: #30d158; }
+#bat.low .bat-fill { fill: var(--danger); }
+.bar-logo img { width: 15px; height: 15px; }
+.bar-logo { font-weight: 700; }
+body:not(.mac) .mac-only, body.mac .bar-time { display: none !important; }
+body.mac #bar {
+  height: 26px; padding: 0 10px; font-weight: 500; text-shadow: none;
+  background: rgba(24, 24, 28, .38); -webkit-backdrop-filter: blur(30px) saturate(170%); backdrop-filter: blur(30px) saturate(170%);
+}
+body.mac #bar svg { filter: none; }
+body.mac .bar-l { gap: 2px; }
+/* Mac: Tabs / Edit / Settings live in the menu bar; only edit-mode buttons stay floating */
+body.mac .tools > :not(.edit-only) { display: none; }
+
 /* ---------- top bar ---------- */
 #top {
   position: fixed; top: 0; left: 0; right: 0; z-index: 5;
@@ -394,6 +428,46 @@ body.editing .page:empty { outline: 2px dashed rgba(255, 255, 255, .3); outline-
 .slot { border-radius: 20px; background: rgba(255, 255, 255, .16); outline: 2px dashed rgba(255, 255, 255, .55); outline-offset: -2px; pointer-events: none; }
 .slot.bad { background: rgba(255, 69, 58, .18); outline-color: rgba(255, 69, 58, .6); }
 .sortable-chosen { animation: none !important; }
+
+/* Mac dock: icons magnify toward the pointer, labels float above, dock grows sideways */
+body.mac #dockList { overflow: visible; align-items: flex-end; height: calc(var(--icon) + 20px); } /* + its 10px padding */
+body.mac #dock .icon {
+  --s: 1; width: calc(var(--icon) * var(--s)); height: calc(var(--icon) * var(--s));
+  border-radius: calc(18px * var(--s)); transition: width .18s, height .18s, border-radius .18s;
+}
+body.mac:not(.editing) #dock .item:hover .icon { --s: 1.55; }
+body.mac:not(.editing) #dock .item:has(+ .item:hover) .icon, body.mac:not(.editing) #dock .item:hover + .item .icon { --s: 1.28; }
+body.mac:not(.editing) #dock .item:has(+ .item + .item:hover) .icon, body.mac:not(.editing) #dock .item:hover + .item + .item .icon { --s: 1.1; }
+body.mac #dock .link a:hover .icon { transform: none; }
+body.mac:not(.editing) #dock .item:hover .label {
+  display: block; position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  max-width: none; padding: 3px 10px; border-radius: 7px; text-shadow: none;
+  background: var(--glass-strong); color: var(--ink); box-shadow: var(--shadow); pointer-events: none;
+}
+body.mac #dock { border-radius: 22px; padding: 8px 10px; }
+
+/* ---------- all apps (launchpad) ---------- */
+.launchpad {
+  width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0;
+  border: 0; background: transparent;
+}
+.launchpad::backdrop { background: rgba(0, 0, 0, .3); -webkit-backdrop-filter: blur(34px) saturate(150%); backdrop-filter: blur(34px) saturate(150%); }
+.launchpad[open] { animation: lp-in .22s ease-out; }
+@keyframes lp-in { from { transform: scale(1.06); opacity: 0; } }
+.lp-wrap { height: 100%; display: flex; flex-direction: column; align-items: center; padding: 48px 32px 32px; gap: 36px; overflow-y: auto; }
+.lp-q {
+  width: min(280px, 100%); padding: 7px 14px !important; border-radius: 10px !important; text-align: center;
+  background: rgba(255, 255, 255, .18) !important; border: 1px solid rgba(255, 255, 255, .25) !important; color: #fff !important;
+}
+.lp-q::placeholder { color: rgba(255, 255, 255, .7); }
+.lp-grid {
+  width: min(1100px, 100%); display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
+  gap: var(--gap) 20px;
+}
+.lp-grid .item { width: calc(var(--cell) + 16px); }
+.lp-grid .del, .lp-grid .badge { display: none; }
+.lp-none { grid-column: 1 / -1; color: rgba(255, 255, 255, .8); }
+body.editing .lp-grid .item { animation: none; }
 
 /* ---------- app switcher ---------- */
 .switcher {

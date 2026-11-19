@@ -157,6 +157,9 @@ assert.equal(pickTab(tabs, 'https://c.vn/'), null);
 assert.equal(validateState({ ...d, settings: { ...d.settings, switchTab: false } }).settings.switchTab, false);
 const old = structuredClone(d); delete old.settings.switchTab;
 assert.equal(validateState(old).settings.switchTab, true); // older installs: on
+assert.equal(validateState(old).settings.mode, 'ios');
+assert.equal(validateState({ ...d, settings: { ...d.settings, mode: 'mac' } }).settings.mode, 'mac');
+assert.equal(validateState({ ...d, settings: { ...d.settings, mode: 'android' } }).settings.mode, 'ios');
 
 // spotlight: diacritic-insensitive, prefix > word > substring, tabs before shortcuts on ties, one row per URL
 assert.equal(score('Ghi chú học tập', 'chu'), 2);

@@ -13,6 +13,30 @@
 <div id="dim"></div>
 <a id="wallCaption" target="_blank" rel="noopener" hidden></a>
 
+<!-- iPad: status bar (time · Wi-Fi · battery). Mac: menu bar (menus left; search, status, clock right). -->
+<div id="bar">
+  <div class="bar-l">
+    <span class="bar-time"></span>
+    <button id="mMono" class="mac-only bar-logo"><img src="icons/icon16.png" alt="">Mono</button>
+    <button id="mEdit" class="mac-only" data-i18n="bar.edit">Sửa</button>
+    <button id="mTabs" class="mac-only" data-i18n="bar.tabs">Tab</button>
+    <button id="mApps" class="mac-only" data-i18n="bar.apps">Ứng dụng</button>
+  </div>
+  <div class="bar-r">
+    <button id="mSpot" class="mac-only" title="Tìm kiếm (Ctrl+K)" aria-label="Tìm kiếm" data-i18n-title="bar.spot" data-i18n-aria="search.aria">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    </button>
+    <span id="wifi" role="img" aria-label="Wi-Fi">
+      <svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></svg>
+    </span>
+    <span id="bat" hidden>
+      <span class="bat-pct"></span>
+      <svg viewBox="0 0 28 14" aria-hidden="true"><rect class="bat-shell" x="1" y="1" width="23" height="12" rx="3.5"/><rect class="bat-fill" x="3" y="3" width="19" height="8" rx="1.8"/><path d="M26.5 5.5v3"/></svg>
+    </span>
+    <span class="bar-clock mac-only"></span>
+  </div>
+</div>
+
 <header id="top">
   <form id="search" class="glass" role="search">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -28,7 +52,7 @@
     <button id="switchBtn" class="tool glass" title="Tab đang mở (Ctrl+↑)" aria-label="Tab đang mở" data-i18n-title="sw.title" data-i18n-aria="sw.aria">
       <svg viewBox="0 0 24 24"><rect x="3" y="6" width="9" height="13" rx="2"/><path d="M15 6h4a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-4"/></svg>
     </button>
-    <button id="editBtn"class="tool glass" title="Chỉnh sửa màn hình" aria-label="Chỉnh sửa" data-i18n-title="edit.title" data-i18n-aria="edit.aria">
+    <button id="editBtn" class="tool glass" title="Chỉnh sửa màn hình" aria-label="Chỉnh sửa" data-i18n-title="edit.title" data-i18n-aria="edit.aria">
       <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
     </button>
     <button id="doneBtn" class="tool glass done edit-only" data-i18n="done">Xong</button>
@@ -42,6 +66,10 @@
 <nav id="dots" aria-label="Trang" data-i18n-aria="pages"></nav>
 
 <footer id="dock" class="glass">
+  <button id="appsBtn" class="dock-add apps-btn" title="Tất cả ứng dụng" aria-label="Tất cả ứng dụng" data-i18n-title="apps.title" data-i18n-aria="apps.title">
+    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>
+  </button>
+  <span class="sep"></span>
   <div id="dockList"></div>
   <span class="sep"></span>
   <button id="dockAdd" class="dock-add" title="Thêm vào dock" aria-label="Thêm vào dock" data-i18n-title="dock.add" data-i18n-aria="dock.add">
@@ -104,6 +132,13 @@
   </div>
 </dialog>
 
+<dialog id="launchpad" class="launchpad">
+  <div class="lp-wrap">
+    <input id="lpQ" class="lp-q" placeholder="Tìm ứng dụng" aria-label="Tìm ứng dụng" data-i18n-ph="apps.ph" data-i18n-aria="apps.ph" autocomplete="off">
+    <div id="lpGrid" class="lp-grid"></div>
+  </div>
+</dialog>
+
 <dialog id="switcher" class="switcher">
   <div class="sw-wrap">
     <div id="cards" class="cards"></div>
@@ -114,7 +149,7 @@
   </div>
 </dialog>
 
-<aside id="settings"class="glass" aria-label="Cài đặt" data-i18n-aria="settings" inert>
+<aside id="settings" class="glass" aria-label="Cài đặt" data-i18n-aria="settings" inert>
   <div class="set-head"><h2 data-i18n="settings">Cài đặt</h2><button class="btn" id="setClose" data-i18n="close">Đóng</button></div>
 
   <section>
@@ -142,6 +177,16 @@
     </label>
     <label class="check"><input type="checkbox" id="spotMore"> <span data-i18n="spot.more">Tìm cả dấu trang và lịch sử</span></label>
     <p class="hint" data-i18n="spot.hint">Ctrl+K hoặc / để tìm tab đang mở, lối tắt…</p>
+  </section>
+
+  <section>
+    <h3 data-i18n="set.look">Giao diện</h3>
+    <label><span data-i18n="look.mode">Kiểu</span>
+      <select id="modeSel">
+        <option value="ios" data-i18n="mode.ios">Kiểu iPad — thanh trạng thái</option>
+        <option value="mac" data-i18n="mode.mac">Kiểu Mac — thanh menu, dock phóng to</option>
+      </select>
+    </label>
   </section>
 
   <section>

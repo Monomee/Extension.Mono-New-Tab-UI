@@ -12,6 +12,50 @@ const applyPanel = async () => {
 applyPanel();
 chrome.storage.onChanged.addListener(c => { if (c.state) applyPanel(); });
 
+/* ---------- Ctrl+Shift+Space: the new tab's switcher, over any page ---------- */
+// Runs inside the page (activeTab grant from the shortcut). Toggles a full-page iframe of overlay.html;
+// blur + dim live on the iframe element itself so they apply to the page behind it.
+function toggleOverlay(src, scheme) {
+  const old = document.getElementById('mono-overlay');
+  if (old) return old.remove();
+  const f = document.createElement('iframe');
+  f.id = 'mono-overlay';
+  f.src = src;
+  // color-scheme must match the overlay's, or Chrome paints the iframe opaque.
+  f.style.cssText = `all: initial; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 2147483647;
+    border: 0; display: block; color-scheme: ${scheme}; background: rgba(0, 0, 0, .35);
+    backdrop-filter: blur(26px) saturate(140%); -webkit-backdrop-filter: blur(26px) saturate(140%);`;
+  const before = document.activeElement;
+  const onMsg = e => {
+    if (e.source !== f.contentWindow || e.data !== 'mono:close') return;
+    f.remove();
+    removeEventListener('message', onMsg);
+    before?.focus?.({ preventScroll: true });
+  };
+  addEventListener('message', onMsg);
+  f.onload = () => f.focus();
+  (document.body || document.documentElement).append(f);
+}
+
+async function openSwitcher(tab) {
+  if (!tab) return;
+  // Our own new tab (tab.url reads chrome://newtab/): use its built-in switcher.
+  if (/^chrome:\/\/newtab|^chrome-extension:/.test(tab.url || '')) {
+    return chrome.runtime.sendMessage({ type: 'switcher', tabId: tab.id }).catch(() => {});
+  }
+  const { settings } = await loadState();
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: toggleOverlay,
+      args: [chrome.runtime.getURL('overlay.html'), settings.theme === 'auto' ? 'light dark' : settings.theme],
+    });
+  } catch {
+    chrome.action.openPopup?.()?.catch(() => {}); // chrome://, Web Store, PDF viewer…: popup instead
+  }
+}
+chrome.commands.onCommand.addListener((cmd, tab) => { if (cmd === 'switcher') openSwitcher(tab); });
+
 /* ---------- omnibox: m <text> → open tabs + shortcuts ---------- */
 async function search(text) {
   const state = await loadState();

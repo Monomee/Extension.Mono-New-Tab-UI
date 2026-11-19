@@ -513,7 +513,7 @@ body.editing .lp-grid .item { animation: none; }
 .switcher::backdrop { background: rgba(0, 0, 0, .35); -webkit-backdrop-filter: blur(26px) saturate(140%); backdrop-filter: blur(26px) saturate(140%); }
 .sw-wrap { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
 .cards {
-  display: flex; justify-content: safe center; gap: 28px; overflow-x: auto; padding: 40px 40px 24px;
+  display: flex; justify-content: safe center; gap: 28px; overflow-x: auto; padding: 40px 40px 80px; margin-bottom: -56px; /* room for card shadows (scrollers clip) */
   scroll-snap-type: x proximity; scrollbar-width: none;
 }
 .card {
@@ -577,7 +577,7 @@ body.popup { width: 760px; height: 540px; padding: 14px; }
 .pop-btn:hover { background: rgba(127, 127, 127, .18); color: var(--ink); }
 .pop-btn svg { width: 19px; height: 19px; }
 .pop-tabs h3 { margin: 16px 4px 8px; }
-.popup .cards { justify-content: flex-start; gap: 16px; padding: 8px 4px 14px; }
+.popup .cards { justify-content: flex-start; gap: 16px; padding: 8px 4px 30px; margin-bottom: -16px; }
 .popup .card { width: 168px; height: 226px; border-radius: 20px; box-shadow: 0 6px 18px rgba(0, 0, 0, .14); }
 .popup .card-body img { width: 60px; height: 60px; padding: 12px; border-radius: 18px; }
 .popup .sw-closed { width: auto; margin: 0; }
@@ -586,6 +586,14 @@ body.popup { width: 760px; height: 540px; padding: 14px; }
 .popup .closed { background: rgba(127, 127, 127, .16); color: var(--ink); }
 .popup .closed:hover { background: rgba(127, 127, 127, .28); }
 .popup .sw-empty { color: var(--ink-soft); font-size: 14px; padding: 12px 4px; }
+
+/* overlay: transparent page in an iframe over any site; dim + blur come from the iframe element */
+html:has(body.overlay), body.overlay { background: transparent; }
+body.overlay { color: #fff; }
+.ov-top { position: fixed; top: 28px; left: 0; right: 0; z-index: 2; display: flex; justify-content: center; }
+.overlay #search { width: min(560px, 100% - 48px); height: 48px; }
+.overlay #results { top: 56px; width: min(560px, 100% - 48px); }
+.overlay .sw-wrap { padding-top: 60px; }
 
 body.panel { min-height: 100vh; padding: 8px; }
 .p-tabs { display: flex; flex-wrap: wrap; gap: 4px; }

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mono</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<!-- Ctrl+Shift+Space on any page: laid over it in an iframe (background.js). Same switcher as the new tab. -->
+<body class="overlay">
+<div class="ov-top">
+  <form id="search" class="glass" role="search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input name="q" placeholder="Tìm tab, lối tắt, trang web…" autocomplete="off" autofocus aria-label="Tìm kiếm" data-i18n-ph="pop.ph" data-i18n-aria="search.aria"
+      role="combobox" aria-controls="results" aria-autocomplete="list">
+  </form>
+  <ul id="results" class="glass" role="listbox" hidden></ul>
+</div>
+<div class="sw-wrap">
+  <div id="cards" class="cards"></div>
+  <section class="sw-closed" hidden>
+    <h3 data-i18n="sw.closed">Mới đóng gần đây</h3>
+    <div id="closedList"></div>
+  </section>
+</div>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

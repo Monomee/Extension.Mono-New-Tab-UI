@@ -86,7 +86,7 @@ const vk = Object.keys(STRINGS.vi).sort(), ek = Object.keys(STRINGS.en).sort();
 assert.deepEqual(ek, vk);
 const ph = s => (s.match(/\{\w+\}/g) || []).sort().join();
 for (const k of vk) if (k !== 'date.month') assert.equal(ph(STRINGS.en[k]), ph(STRINGS.vi[k]), k);
-const html = ['newtab', 'popup', 'panel'].map(f => readFileSync(new URL(`../${f}.html`, import.meta.url), 'utf8')).join('');
+const html = ['newtab', 'popup', 'panel', 'overlay'].map(f => readFileSync(new URL(`../${f}.html`, import.meta.url), 'utf8')).join('');
 const htmlKeys = [...html.matchAll(/data-i18n(?:-ph|-title|-aria)?="([^"]+)"/g)].map(m => m[1]);
 assert.ok(htmlKeys.length > 50);
 assert.deepEqual(htmlKeys.filter(k => !(k in STRINGS.vi)), []); // no typo'd keys in the page
@@ -139,7 +139,7 @@ assert.equal(describeWeather(12345, true).text, 'Không rõ');
 // manifest strings come from _locales; every locale has the same keys
 const manifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
 const msgs = l => JSON.parse(readFileSync(new URL(`../_locales/${l}/messages.json`, import.meta.url), 'utf8'));
-for (const l of ['en', 'vi']) for (const k of ['name', 'description', 'actionTitle']) assert.ok(msgs(l)[k]?.message, `${l}.${k}`);
+for (const l of ['en', 'vi']) for (const k of ['name', 'description', 'actionTitle', 'cmdSwitcher']) assert.ok(msgs(l)[k]?.message, `${l}.${k}`);
 assert.equal(manifest.name, '__MSG_name__');
 assert.ok(msgs(manifest.default_locale));
 

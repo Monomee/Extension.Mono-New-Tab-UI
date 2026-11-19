@@ -815,7 +815,7 @@ $('#sidePanelOn').onchange = e => {
 };
 $('#shortcutBtn').onclick = () => chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 chrome.commands.getAll().then(cs => {
-  $('#shortcutKey').textContent = cs.find(c => c.name === '_execute_action')?.shortcut || t('apps.noKey');
+  $('#shortcutKey').textContent = cs.find(c => c.name === 'switcher')?.shortcut || t('apps.noKey');
 });
 $('#modeSel').onchange = e => setSetting('mode', e.target.value);
 $('#themeSel').onchange = e => setSetting('theme', e.target.value);
@@ -930,6 +930,12 @@ async function leave() {
 const switcher = initSwitcher({ tabs: () => openTabs, refresh: refreshTabs, switchTo, leave, favicon: faviconUrl });
 chrome.sessions?.onChanged.addListener(() => switcher.update());
 chrome.tabs.onActivated.addListener(tabsChanged); // recency order in the switcher
+// Ctrl+Shift+Space while this new tab is in front (background.js): toggle the switcher here.
+chrome.runtime.onMessage.addListener(m => {
+  if (m?.type !== 'switcher' || m.tabId !== selfTab?.id) return;
+  if ($('#switcher').open) $('#switcher').close();
+  else if (!$('dialog[open]')) switcher.open();
+});
 
 /* ---------- all apps (launchpad) ---------- */
 // Every shortcut (pages, folders, dock) once, A→Z, filterable. Icons are normal items: same click rules.

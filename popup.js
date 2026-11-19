@@ -1,4 +1,6 @@
-// Popup (toolbar button or Ctrl+Shift+Space on any tab): spotlight + app switcher for the tab you're on.
+// Spotlight + app switcher for the tab you're on. Two hosts:
+// - popup.html: toolbar button (also the fallback where the overlay can't go, e.g. chrome:// pages)
+// - overlay.html: Ctrl+Shift+Space, an iframe background.js lays over the page — same look as the new tab switcher
 import { loadState, ENGINES } from './state.js';
 import { setLang, translateDom } from './i18n.js';
 import { faviconUrl, allLinks, SIDE_PANEL } from './tabs.js';
@@ -6,7 +8,9 @@ import { initSpotlight } from './spotlight.js';
 import { initSwitcher } from './switcher.js';
 
 const $ = s => document.querySelector(s);
-const close = () => window.close();
+const overlay = document.body.classList.contains('overlay');
+// The overlay can't remove its own iframe: the script injected into the page does it on this message.
+const close = overlay ? () => parent.postMessage('mono:close', '*') : () => window.close();
 const state = await loadState();
 const s = state.settings;
 setLang(s.lang);
@@ -47,7 +51,13 @@ $('#search').q.addEventListener('keydown', e => {
 });
 
 // Side panel dock, when turned on in settings.
-if (SIDE_PANEL && s.sidePanel && chrome.sidePanel) {
+if (overlay) {
+  // Esc (with an empty search box) or a click on the dimmed background closes it.
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#search').q.value) { e.preventDefault(); close(); } }, true);
+  document.addEventListener('click', e => { if (e.target.matches('body, .sw-wrap, .cards, .ov-top')) close(); });
+}
+
+if (SIDE_PANEL && s.sidePanel && chrome.sidePanel && $('#panelBtn')) {
   $('#panelBtn').hidden = false;
   $('#panelBtn').onclick = () => { chrome.sidePanel.open({ windowId: here.windowId }); close(); };
 }

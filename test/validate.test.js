@@ -160,6 +160,11 @@ assert.equal(validateState(old).settings.switchTab, true); // older installs: on
 assert.equal(validateState(old).settings.mode, 'ios');
 assert.equal(validateState({ ...d, settings: { ...d.settings, mode: 'mac' } }).settings.mode, 'mac');
 assert.equal(validateState({ ...d, settings: { ...d.settings, mode: 'android' } }).settings.mode, 'ios');
+// control center / lock settings
+const cc = v => validateState({ ...d, settings: { ...d.settings, ...v } }).settings;
+assert.deepEqual([cc({ theme: 'dark' }).theme, cc({ theme: 'pink' }).theme], ['dark', 'auto']);
+assert.deepEqual([cc({ focus: true }).focus, cc({ focus: 'yes' }).focus], [true, false]);
+assert.deepEqual([cc({ lock: 0 }).lock, cc({ lock: 15 }).lock, cc({ lock: 7 }).lock, cc({ lock: '5' }).lock], [0, 15, 5, 5]);
 
 // spotlight: diacritic-insensitive, prefix > word > substring, tabs before shortcuts on ties, one row per URL
 assert.equal(score('Ghi chú học tập', 'chu'), 2);
@@ -185,5 +190,10 @@ const { avgColor } = await import('../switcher.js');
 assert.deepEqual(avgColor(px(4, x => (x < 2 ? [200, 0, 0, 255] : [255, 255, 255, 255]))), [200, 0, 0]);
 assert.deepEqual(avgColor(px(4, x => (x < 2 ? [0, 0, 200, 255] : [0, 255, 0, 0]))), [0, 0, 200]);
 assert.equal(avgColor(px(4, () => [255, 255, 255, 255])), null);
+
+const { shortTime } = await import('../device.js');
+const nine = new Date(2026, 0, 1, 21, 41);
+assert.equal(shortTime(nine, 'en-US'), '9:41');
+assert.equal(shortTime(nine, 'vi-VN'), '21:41');
 
 console.log('ok');

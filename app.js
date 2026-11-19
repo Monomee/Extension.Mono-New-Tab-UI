@@ -4,7 +4,7 @@ import { renderWidget, tick } from './widgets.js';
 import { t, setLang, translateDom, locale } from './i18n.js';
 import { tabsFor, pickTab } from './tabs.js';
 import { initSpotlight, MORE, fold, score } from './spotlight.js';
-import { applyMode, initBar } from './device.js';
+import { applyMode, initBar, initLock } from './device.js';
 import { initSwitcher } from './switcher.js';
 
 const $ = s => document.querySelector(s);
@@ -123,6 +123,8 @@ function applySettings() {
   $('#search').action = ENGINES[s.engine];
   setLang(s.lang);
   applyMode(s.mode);
+  document.documentElement.dataset.theme = s.theme;
+  document.body.classList.toggle('focus', s.focus);
   translateDom();
 }
 
@@ -786,14 +788,24 @@ function syncSettingsUI() {
   $('#langSel').value = s.lang;
   $('#switchTab').checked = s.switchTab;
   $('#modeSel').value = s.mode;
+  $('#themeSel').value = s.theme;
+  $('#lockSel').value = s.lock;
+  // control center mirrors the same settings
+  for (const b of $('#ccTheme').children) b.ariaPressed = b.dataset.v === s.theme;
+  $('#ccFocus').ariaPressed = s.focus;
+  $('#ccSwitch').ariaPressed = s.switchTab;
+  $('#ccMode').ariaPressed = s.mode === 'mac';
+  $('#ccBright').value = 0.8 - s.dim;
 }
-const setSetting = (k, v) => { state.settings[k] = v; applySettings(); save(); };
+const setSetting = (k, v) => { state.settings[k] = v; applySettings(); syncSettingsUI(); save(); };
 $('#dimRange').oninput = e => setSetting('dim', +e.target.value);
 $('#blurRange').oninput = e => setSetting('blur', +e.target.value);
 $('#searchOn').onchange = e => setSetting('search', e.target.checked);
 $('#engineSel').onchange = e => setSetting('engine', e.target.value);
 $('#switchTab').onchange = e => setSetting('switchTab', e.target.checked);
 $('#modeSel').onchange = e => setSetting('mode', e.target.value);
+$('#themeSel').onchange = e => setSetting('theme', e.target.value);
+$('#lockSel').onchange = e => setSetting('lock', +e.target.value);
 $('#langSel').onchange = e => {
   setSetting('lang', e.target.value); // applySettings → setLang + translateDom
   render(); // widgets & dots build their text in JS
@@ -955,6 +967,26 @@ initBar({
   mTabs: () => switcher.open(),
   mApps: openLaunchpad,
   mSpot: () => spotlight.open(),
+});
+
+/* ---------- control center ---------- */
+const $cc = $('#cc');
+const openCc = on => { $cc.classList.toggle('open', on); $cc.inert = !on; };
+$('#ccBtn').onclick = () => openCc(!$cc.classList.contains('open'));
+$('#ccTheme').onclick = e => { if (e.target.dataset.v) setSetting('theme', e.target.dataset.v); };
+$('#ccFocus').onclick = () => setSetting('focus', !state.settings.focus);
+$('#ccSwitch').onclick = () => setSetting('switchTab', !state.settings.switchTab);
+$('#ccMode').onclick = () => setSetting('mode', state.settings.mode === 'mac' ? 'ios' : 'mac');
+$('#ccBright').oninput = e => setSetting('dim', Math.round((0.8 - e.target.value) * 100) / 100);
+$('#ccLock').onclick = () => { openCc(false); locker.lock(); };
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#cc, #ccBtn')) openCc(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') openCc(false); });
+
+/* ---------- lock screen ---------- */
+const locker = initLock({
+  minutes: () => state.settings.lock,
+  busy: () => editing || dragging || !!$('dialog[open]') || $set.classList.contains('open') || $cc.classList.contains('open')
+    || document.body.classList.contains('spot'),
 });
 
 /* ---------- other tabs ---------- */
